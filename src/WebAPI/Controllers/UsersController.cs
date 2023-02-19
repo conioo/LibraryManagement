@@ -12,7 +12,6 @@ using WebAPI.ApiRoutes;
 
 namespace WebAPI.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}")]
     [Route("[controller]")]
     [ApiController]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
@@ -25,6 +24,7 @@ namespace WebAPI.Controllers
             _service = service;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}")]
         [HttpGet(Users.GetAllUsers)]
         [SwaggerOperation(Summary = "returns all users")]
         [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
@@ -34,6 +34,7 @@ namespace WebAPI.Controllers
             return Ok(items);
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}")]
         [HttpGet(Users.GetPage)]
         [SwaggerOperation(Summary = "returns the users page")]
         [ProducesResponseType(typeof(PagedResponse<UserResponse>), StatusCodes.Status200OK)]
@@ -56,6 +57,7 @@ namespace WebAPI.Controllers
             return Ok(user);
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}")]
         [HttpPut(Users.UpdateUser)]
         [SwaggerOperation(Summary = "update user")]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
@@ -66,6 +68,8 @@ namespace WebAPI.Controllers
             return Ok();
         }
 
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}")]
         [HttpDelete(Users.RemoveUser)]
         [SwaggerOperation(Summary = "deletes excisting user")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

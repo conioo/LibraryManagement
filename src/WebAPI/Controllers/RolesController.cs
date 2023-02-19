@@ -62,7 +62,7 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpPost(Roles.GetUsersInRole)]
+        [HttpGet(Roles.GetUsersInRole)]
         [SwaggerOperation(Summary = "returns users in role by role id")]
         [ProducesResponseType(typeof(IEnumerable<UserResponse>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

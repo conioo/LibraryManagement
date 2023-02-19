@@ -33,5 +33,6 @@ namespace Application.Services
             _transportService.Send(email);
             _transportService.Disconnect(true);
         }
+
     }
 }

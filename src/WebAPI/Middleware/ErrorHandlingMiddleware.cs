@@ -27,7 +27,7 @@ namespace WebAPI.Middleware
                     await context.Response.WriteAsync(exception.Message);
                 }
             }
-            catch (IdentityException exception) // json do zwracania
+            catch (IdentityException exception)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
                 var problemDetails = new ValidationProblemDetails();
@@ -44,9 +44,9 @@ namespace WebAPI.Middleware
             }
             catch (AuthenticationException exception)
             {
-                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;//message nie dziala
 
-                await context.Response.WriteAsync(exception.Message);//nie dziala message
+                await context.Response.WriteAsync(exception.Message);
             }
             catch (ApiException exception)
             {

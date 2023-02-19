@@ -2,6 +2,7 @@
 using Application.Services;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -20,12 +21,11 @@ namespace Application
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IAdminService, AdminService>();
 
             services.AddScoped<IJwtService, JwtService>();
 
             services.AddScoped<IUserResolverService, UserResolverService>();
-
-            services.AddTransient<UserResolverService>(); // tutaj cos nie gra
 
             services.AddScoped<SignInManager<ApplicationUser>>();
 

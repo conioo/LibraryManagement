@@ -7,6 +7,7 @@ using AutoMapper;
 using Domain.Settings;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Extensions;
 using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -14,9 +15,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
-// unit do usuniecia mozna
-// osobne appsetingsy
 
 namespace Application.Services
 {
@@ -91,23 +89,13 @@ namespace Application.Services
                 throw new IdentityException(result.Errors);
             }
 
-            await SendVerificationEmail(newUser);
+            await _emailService.SendVerificationEmail(newUser, _userManager, _applicationOptions);
 
             var userResponse = _mapper.Map<UserResponse>(newUser);
 
             return userResponse;
         }
-        private async Task SendVerificationEmail(ApplicationUser user)
-        {
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-            var callbackUrl = $"{_applicationOptions.BaseAddress}/{_applicationOptions.RoutePrefix}/{_applicationOptions.CallbackUrlForVerificationEmail}";
-
-            callbackUrl = QueryHelpers.AddQueryString(callbackUrl, "userId", user.Id);
-            callbackUrl = QueryHelpers.AddQueryString(callbackUrl, "token", token);
-
-            await _emailService.SendAsync(new Email(user.Email, "Confirm your account", $"Please confirm your account by visiting this URL {callbackUrl}"));
-        }
+      
         public async Task<LoginResponse> LoginAsync(LoginRequest dto)
         {
             var user = await _identityContext.Users.Include(user => user.RefreshToken).SingleOrDefaultAsync(user => user.Email == dto.Email);
