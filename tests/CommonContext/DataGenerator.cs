@@ -61,7 +61,7 @@ namespace CommonContext
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
-            applicationUserGenerator.UseSeed(500);
+            applicationUserGenerator.UseSeed(93842421);
             identityRoleGenerator.UseSeed(750);
             roleRequetsGenerator.UseSeed(1000);
 

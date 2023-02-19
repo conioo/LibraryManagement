@@ -18,6 +18,8 @@ namespace Infrastructure.Identity.Seeds
             roleWorker.NormalizedName = UserRoles.Worker.ToUpper();
             roleBasic.NormalizedName = UserRoles.Basic.ToUpper();
 
+            roleAdmin.Id = "E7FE5A9D-2647-48D5-8CAF-EE6597ED7283";
+
             builder.Entity<IdentityRole>().HasData(roleAdmin, roleModerator, roleWorker, roleBasic);
         }
     }

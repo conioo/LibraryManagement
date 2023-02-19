@@ -41,12 +41,6 @@ namespace Infrastructure.Identity.Data
                         .ValueGeneratedOnAdd();
             });
 
-            builder.Entity<IdentityRole>(entityBuilder =>
-            {
-                entityBuilder.Property(entity => entity.Id)
-                        .ValueGeneratedOnAdd();
-            });
-
             builder.Entity<ApplicationUser>(entityBuilder =>
             {
                 entityBuilder.HasOne(entity => entity.RefreshToken)

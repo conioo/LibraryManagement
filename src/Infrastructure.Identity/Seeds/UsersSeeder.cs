@@ -24,6 +24,8 @@ namespace Infrastructure.Identity.Seeds
             userAdmin.PasswordHash = passwordHasher.HashPassword(userAdmin, "11js&5$henai83s");
 
             builder.Entity<ApplicationUser>().HasData(userAdmin);
+
+            builder.Entity<IdentityUserRole<string>>().HasData(new IdentityUserRole<string>() { UserId = userAdmin.Id, RoleId = "E7FE5A9D-2647-48D5-8CAF-EE6597ED7283" });
         }
     }
 }

@@ -19,7 +19,6 @@ namespace CommonContext
 
         public Task<AuthenticateResult> AuthenticateAsync(AuthorizationPolicy policy, HttpContext context)
         {
-
             var user = _identityContext.Users.Single(user => user.UserName == "default");
 
             var claimsPrincipal = new ClaimsPrincipal();

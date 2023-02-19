@@ -31,7 +31,6 @@
     <ProjectReference Include="..\..\src\Domain\Domain.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure.Identity\Infrastructure.Identity.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure.Persistence\Infrastructure.Persistence.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\src\WebAPI\WebAPI.csproj" />
   </ItemGroup>
 

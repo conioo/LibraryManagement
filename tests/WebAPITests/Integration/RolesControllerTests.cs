@@ -387,7 +387,7 @@ namespace WebAPITests.Integration
 
             var request = new HttpRequestMessage()
             {
-                Method = HttpMethod.Post,
+                Method = HttpMethod.Get,
                 RequestUri = new Uri(_client.BaseAddress + Roles.GetUsersInRole + $"?roleId={roleBasicId}"),
             };
 
@@ -409,7 +409,7 @@ namespace WebAPITests.Integration
 
             var request = new HttpRequestMessage()
             {
-                Method = HttpMethod.Post,
+                Method = HttpMethod.Get,
                 RequestUri = new Uri(_client.BaseAddress + Roles.GetUsersInRole + $"?roleId={roleBasicId}"),
             };
 
@@ -426,7 +426,7 @@ namespace WebAPITests.Integration
         {
             var request = new HttpRequestMessage()
             {
-                Method = HttpMethod.Post,
+                Method = HttpMethod.Get,
                 RequestUri = new Uri(_client.BaseAddress + Roles.GetUsersInRole + $"?roleId=null_null"),
             };
 

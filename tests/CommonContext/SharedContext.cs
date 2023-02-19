@@ -1,4 +1,6 @@
-﻿using Application.Interfaces;
+﻿using Application.Dtos.Identity.Request;
+using Application.Dtos.Identity.Response;
+using Application.Interfaces;
 using CommonContext;
 using Domain.Interfaces;
 using Domain.Settings;
@@ -14,7 +16,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Net.Http.Json;
 using WebAPI;
+using WebAPI.ApiRoutes;
 
 namespace WebAPITests.Integration
 {
@@ -71,7 +75,14 @@ namespace WebAPITests.Integration
             IdentityDbContext.Database.EnsureCreated();
             DbContext.Database.EnsureCreated();
 
-            ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/{_options.controllerPrefix}/");
+            if(String.IsNullOrEmpty(_options.controllerPrefix))
+            {
+                ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/");
+            }
+            else
+            {
+                ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/{_options.controllerPrefix}/");
+            }
         }
 
         public SharedContext(Action<SharedContextOptions> optionsBuilder) : this(InvocationHelper(optionsBuilder))
@@ -158,6 +169,27 @@ namespace WebAPITests.Integration
                     services.AddSingleton(emailMock.Object);
                 }
             });
+        }
+
+        public async Task<LoginResponse> LoginAsync(HttpClient client, ApplicationUser user, string password)
+        {
+            var loginRequest = new LoginRequest();
+
+            loginRequest.Email = user.Email;
+            loginRequest.Password = password;
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(client.BaseAddress + Accounts.Prefix + "/" + Accounts.Login),
+                Content = JsonContent.Create(loginRequest)
+            };
+
+            var response = await client.SendAsync(request);
+
+            var responseLogin = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+            return responseLogin;
         }
     }
 }
