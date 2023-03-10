@@ -1,7 +1,8 @@
-﻿using WebAPI.ApiRoutes;
+﻿using CommonContext.SharedContextBuilders;
+using WebAPI.ApiRoutes;
 using WebAPITests.Integration;
 
-namespace CommonContext.SharedContextBuilders
+namespace WebAPITests.Integration.SharedContextBuilders
 {
     public class ItemContextBuilder : ISharedContextBuilder
     {

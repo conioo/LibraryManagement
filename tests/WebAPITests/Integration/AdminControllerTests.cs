@@ -11,6 +11,7 @@ using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
 using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Mvc;
+using WebAPITests.Integration.SharedContextBuilders;
 
 namespace WebAPITests.Integration
 {

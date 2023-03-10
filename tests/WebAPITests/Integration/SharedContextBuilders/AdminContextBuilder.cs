@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommonContext.SharedContextBuilders;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 using WebAPI.ApiRoutes;
 using WebAPITests.Integration;
 
-namespace CommonContext.SharedContextBuilders
+namespace WebAPITests.Integration.SharedContextBuilders
 {
     public class AdminContextBuilder : ISharedContextBuilder
     {

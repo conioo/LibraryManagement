@@ -10,6 +10,7 @@ using Sieve.Models;
 using System.Net;
 using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
+using WebAPITests.Integration.SharedContextBuilders;
 
 namespace WebAPITests.Integration
 {

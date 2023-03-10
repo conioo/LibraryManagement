@@ -19,8 +19,7 @@ namespace Application
             services.AddSingleton<IMailTransport, SmtpClient>();
 
             services.AddScoped<IItemService, ItemService>();
-
-            // services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ILibraryService, LibraryService>();
 
             services.AddSingleton<IEmailService, EmailService>();
 

@@ -6,6 +6,7 @@ using AutoMapper.QueryableExtensions;
 using Domain.Common;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Sieve.Models;
 using Sieve.Services;
 
@@ -16,12 +17,14 @@ namespace Application.Services
         protected readonly IUnitOfWork _unitOfWork;
         protected readonly IMapper _mapper;
         protected readonly ISieveProcessor _sieveProcessor;
+        private readonly ILogger _logger;
 
-        public CommonService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor)
+        public CommonService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _sieveProcessor = sieveProcessor;
+            _logger = logger;
         }
 
         public virtual async Task<IEnumerable<TResponse>> GetAllAsync()

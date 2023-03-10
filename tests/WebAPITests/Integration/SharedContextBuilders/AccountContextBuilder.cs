@@ -1,7 +1,7 @@
-﻿using WebAPI.ApiRoutes;
-using WebAPITests.Integration;
+﻿using CommonContext.SharedContextBuilders;
+using WebAPI.ApiRoutes;
 
-namespace CommonContext.SharedContextBuilders
+namespace WebAPITests.Integration.SharedContextBuilders
 {
     public class AccountContextBuilder : ISharedContextBuilder
     {

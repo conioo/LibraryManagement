@@ -13,6 +13,7 @@ using Sieve.Models;
 using System.Net;
 using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
+using WebAPITests.Integration.SharedContextBuilders;
 
 namespace WebAPITests.Integration
 {
@@ -223,7 +224,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRoleAsync_ForValidModel_Returns201Created()
         {
-            var roleRequest = DataGenerator.Get<RoleRequest>(1).First();
+            var roleRequest = DataGenerator.GetRequest<RoleRequest>(1).First();
 
             var request = new HttpRequestMessage()
             {

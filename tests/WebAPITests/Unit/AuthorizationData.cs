@@ -24,6 +24,10 @@ namespace WebAPITests.Unit
                     //new object[]{Accounts.Prefix, Accounts.Logout, HttpMethod.Head},
 
                     new object[]{Users.Prefix, Users.GetUser, HttpMethod.Get},
+
+                    new object[]{Libraries.Prefix, Libraries.GetAllLibraries, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetLibraryById, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetPage, HttpMethod.Get },
                 };
             }
         }
@@ -58,6 +62,10 @@ namespace WebAPITests.Unit
                     new object[]{Users.Prefix, Users.GetPage, HttpMethod.Get},
                     new object[]{Users.Prefix, Users.UpdateUser, HttpMethod.Put},
                     new object[]{Users.Prefix, Users.RemoveUser, HttpMethod.Delete},
+
+                    new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
+                    new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
+                    new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
                 };
             }
         }
@@ -87,6 +95,10 @@ namespace WebAPITests.Unit
                     //new object[]{Accounts.Prefix, Accounts.Logout, HttpMethod.Head},
 
                     new object[]{Users.Prefix, Users.GetUser, HttpMethod.Get},
+
+                    new object[]{Libraries.Prefix, Libraries.GetAllLibraries, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetLibraryById, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetPage, HttpMethod.Get },
                 };
             }
         }
@@ -115,6 +127,10 @@ namespace WebAPITests.Unit
                     new object[]{Users.Prefix, Users.GetPage, HttpMethod.Get},
                     new object[]{Users.Prefix, Users.UpdateUser, HttpMethod.Put},
                     new object[]{Users.Prefix, Users.RemoveUser, HttpMethod.Delete},
+
+                    new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
+                    new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
+                    new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
                 };
             }
         }
@@ -157,6 +173,13 @@ namespace WebAPITests.Unit
                     new object[]{Users.Prefix, Users.GetUser, HttpMethod.Get},
                     new object[]{Users.Prefix, Users.GetAllUsers, HttpMethod.Get},
                     new object[]{Users.Prefix, Users.GetPage, HttpMethod.Get},
+
+                      new object[]{Libraries.Prefix, Libraries.GetAllLibraries, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetLibraryById, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetPage, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
+                    new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
+                    new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
                 };
             }
         }
@@ -169,7 +192,7 @@ namespace WebAPITests.Unit
                 {
                     new object[]{Admin.Prefix, Admin.AddAdmin, HttpMethod.Post},
                     new object[]{Admin.Prefix, Admin.AddWorker, HttpMethod.Post},
-                   
+
                     new object[]{Users.Prefix, Users.UpdateUser, HttpMethod.Put},
                     new object[]{Users.Prefix, Users.RemoveUser, HttpMethod.Delete},
                 };
@@ -219,6 +242,13 @@ namespace WebAPITests.Unit
 
                     new object[]{Admin.Prefix, Admin.AddAdmin, HttpMethod.Post},
                     new object[]{Admin.Prefix, Admin.AddWorker, HttpMethod.Post},
+
+                    new object[]{Libraries.Prefix, Libraries.GetAllLibraries, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetLibraryById, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.GetPage, HttpMethod.Get },
+                    new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
+                    new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
+                    new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
                 };
             }
         }

@@ -4,6 +4,7 @@ using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using Sieve.Services;
 using System.Runtime.CompilerServices;
 
@@ -13,7 +14,7 @@ namespace Application.Services
 {
     internal class ItemService : CommonService<Item, ItemRequest, ItemResponse>, IItemService
     {
-        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor) : base(unitOfWork, mapper, sieveProcessor)
+        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<ItemService> logger) : base(unitOfWork, mapper, sieveProcessor, logger)
         { }
 
     }

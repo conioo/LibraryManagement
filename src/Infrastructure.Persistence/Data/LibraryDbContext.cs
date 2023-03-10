@@ -12,6 +12,7 @@ namespace Infrastructure.Persistence.Data
         private readonly IConfiguration _configuration;
         private readonly IUserResolverService _userResolverService;
         public DbSet<Item> Items { get; set; }
+        public DbSet<Library> Libraries { get; set; }
 
         public LibraryDbContext(DbContextOptions<LibraryDbContext> dbContextOptions) : base(dbContextOptions)
         {

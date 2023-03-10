@@ -6,13 +6,11 @@ using Domain.Entities;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
 
-// na generyczne zamiana, wlasny automapper na request
-
 namespace CommonContext
 {
     public static class DataGenerator
     {
-        private static readonly Dictionary<Type, dynamic> _generators = new Dictionary<Type, dynamic>(); //IFakerTInternal
+        private static readonly Dictionary<Type, dynamic> _generators = new Dictionary<Type, dynamic>(); 
         private static readonly Dictionary<Type, Type> _domainTypes = new Dictionary<Type, Type>();
         public static readonly IMapper _mapper;
 
@@ -21,12 +19,15 @@ namespace CommonContext
             var mapperConfiguration = new MapperConfiguration(config =>
             {
                 config.CreateMap<Item, ItemRequest>();
+                config.CreateMap<Library, LibraryRequest>();
+                config.CreateMap<IdentityRole, RoleRequest>();
             });
 
             _mapper = mapperConfiguration.CreateMapper();
 
             _domainTypes[typeof(ItemRequest)] = typeof(Item);
             _domainTypes[typeof(RoleRequest)] = typeof(IdentityRole);
+            _domainTypes[typeof(LibraryRequest)] = typeof(Library);
 
 
             var itemGenerator = new Faker<Item>()
@@ -56,20 +57,28 @@ namespace CommonContext
                .RuleFor(role => role.Name, faker => "_" + faker.Name.JobType())
                .RuleFor(role => role.NormalizedName, (faker, role) => role.Name.ToUpper());
 
-            var roleRequetsGenerator = new Faker<RoleRequest>()
-                .RuleFor(roleRequets => roleRequets.Name, faker => "_" + faker.Name.JobType());
+            var libraryGenerator = new Faker<Library>()
+               .RuleFor(Library => Library.Name, faker => faker.Company.CompanyName())
+               .RuleFor(Library => Library.Description, faker => faker.Name.JobDescriptor())
+               .RuleFor(Library => Library.Address, faker => faker.Address.FullAddress())
+               .RuleFor(Library => Library.Email, faker => faker.Internet.Email())
+               .RuleFor(Library => Library.PhoneNumber, faker => faker.Person.Phone)
+               .RuleFor(Library => Library.NumberOfComputerStations, faker => faker.Random.Number(10))
+               .RuleFor(Library => Library.IsScanner, faker => faker.Random.Bool())
+               .RuleFor(Library => Library.IsPrinter, faker => faker.Random.Bool())
+               .RuleFor(Library => Library.IsPhotocopier, faker => faker.Random.Bool());
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
             applicationUserGenerator.UseSeed(93842421);
             identityRoleGenerator.UseSeed(750);
-            roleRequetsGenerator.UseSeed(1000);
+            libraryGenerator.UseSeed(1250);
 
             _generators[typeof(Item)] = itemGenerator;
             _generators[typeof(RegisterRequest)] = registerRequestGenerator;
             _generators[typeof(ApplicationUser)] = applicationUserGenerator;
             _generators[typeof(IdentityRole)] = identityRoleGenerator;
-            _generators[typeof(RoleRequest)] = roleRequetsGenerator;
+            _generators[typeof(Library)] = libraryGenerator;
         }
 
         public static IEnumerable<T> Get<T>(int number)

@@ -1,6 +1,7 @@
 using Application;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Serilog;
 using WebAPI.Conventions;
 using WebAPI.Installers.Extensions;
 using WebAPI.Middleware;
@@ -13,6 +14,8 @@ namespace WebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Host.UseSerilog((hostingContext, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration));
+
             builder.Services.AddControllers(options =>
             {
                 options.Conventions.Add(new RoutePrefixConvention(builder.Configuration));
@@ -23,9 +26,14 @@ namespace WebAPI
             builder.Services.AddInfrastructurePersistence();
             builder.Services.AddInfrastructureIdentity(builder.Configuration);
 
+
             //builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
+
+            //app.UseSerilogRequestLogging();
+
+            app.UseStaticFiles();
 
             if (app.Environment.IsDevelopment())
             {

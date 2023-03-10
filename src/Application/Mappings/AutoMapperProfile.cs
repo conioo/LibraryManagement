@@ -12,6 +12,9 @@ namespace Application.Mappings
             CreateMap<ItemRequest, Item>();
             CreateMap<ItemRequest, ItemResponse>();
             CreateMap<Item, ItemResponse>();
+
+            CreateMap<Library, LibraryResponse>();
+            CreateMap<LibraryRequest, Library>();
         }
     }
 }

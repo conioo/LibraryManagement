@@ -2,7 +2,7 @@
 
 namespace CommonContext.SharedContextBuilders
 {
-    internal interface ISharedContextBuilder
+    public interface ISharedContextBuilder
     {
         public SharedContext Value { get; }
     }
