@@ -1,6 +1,9 @@
 ﻿using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Serilog.Core;
+using static Sieve.Extensions.MethodInfoExtended;
 
 namespace Infrastructure.Identity.Seeds
 {
@@ -18,8 +21,7 @@ namespace Infrastructure.Identity.Seeds
             roleWorker.NormalizedName = UserRoles.Worker.ToUpper();
             roleBasic.NormalizedName = UserRoles.Basic.ToUpper();
 
-            roleAdmin.Id = "E7FE5A9D-2647-48D5-8CAF-EE6597ED7283";
-
+            roleAdmin.Id = "051a944a-9862-4fc6-a2e5-714c13585122";
             builder.Entity<IdentityRole>().HasData(roleAdmin, roleModerator, roleWorker, roleBasic);
         }
     }

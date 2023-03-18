@@ -7,7 +7,9 @@ using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Sieve.Services;
+using System.Data;
 using System.Security.Claims;
 
 namespace Application.Services
@@ -16,7 +18,7 @@ namespace Application.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, UserManager<ApplicationUser> userManager) : base(identityContext, mapper, sieveProcessor)
+        public UserService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<RoleService> logger, IUserResolverService userResolverService, UserManager<ApplicationUser> userManager) : base(identityContext, mapper, sieveProcessor, userResolverService, logger)
         {
             _userManager = userManager;
         }
@@ -36,6 +38,8 @@ namespace Application.Services
             {
                 throw new IdentityException(result.Errors);
             }
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} removed user: {id}");
         }
 
         public override async Task<UserResponse> AddAsync(RegisterRequest dto)
@@ -48,6 +52,8 @@ namespace Application.Services
             {
                 throw new IdentityException(result.Errors);
             }
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} added user: {dto.UserName}");
 
             return _mapper.Map<UserResponse>(user);
         }
@@ -82,6 +88,8 @@ namespace Application.Services
             _identityContext.Users.Update(user);
 
             await _identityContext.SaveChangesAsync();
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} updated user: {user.Id}");
         }
     }
 }

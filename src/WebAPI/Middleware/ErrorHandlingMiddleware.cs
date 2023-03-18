@@ -44,7 +44,7 @@ namespace WebAPI.Middleware
             }
             catch (AuthenticationException exception)
             {
-                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;//message nie dziala
+                context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
 
                 await context.Response.WriteAsync(exception.Message);
             }
@@ -60,6 +60,7 @@ namespace WebAPI.Middleware
             {
                 context.Response.StatusCode = 500;
                 _logger.LogError(exception.Message);
+                await context.Response.WriteAsync("something went wrong");
             }
         }
     }

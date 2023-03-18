@@ -1,4 +1,5 @@
 using Application;
+using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Serilog;
@@ -31,9 +32,7 @@ namespace WebAPI
 
             var app = builder.Build();
 
-            //app.UseSerilogRequestLogging();
-
-            app.UseStaticFiles();
+            app.UseSerilogRequestLogging();
 
             if (app.Environment.IsDevelopment())
             {

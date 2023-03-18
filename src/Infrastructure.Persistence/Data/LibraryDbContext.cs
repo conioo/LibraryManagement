@@ -13,6 +13,7 @@ namespace Infrastructure.Persistence.Data
         private readonly IUserResolverService _userResolverService;
         public DbSet<Item> Items { get; set; }
         public DbSet<Library> Libraries { get; set; }
+        //public DbSet<Copy> Copies { get; set; }
 
         public LibraryDbContext(DbContextOptions<LibraryDbContext> dbContextOptions) : base(dbContextOptions)
         {
@@ -35,9 +36,24 @@ namespace Infrastructure.Persistence.Data
             builder.Entity<Item>(entityBuilder =>
             {
                 //entityBuilder.Property(entity => entity.Id).HasDefaultValueSql("NEWID()");
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
                 entityBuilder.Property(entity => entity.Title).HasMaxLength(50);
 
             });
+
+            builder.Entity<Library>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            //builder.Entity<Copy>(entityBuilder =>
+            //{
+            //    entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
+            //});
+
+
+
+
 
             base.OnModelCreating(builder);
         }
@@ -54,7 +70,7 @@ namespace Infrastructure.Persistence.Data
                 return base.SaveChangesAsync(cancellationToken);
             }
 
-            var userName = _userResolverService.GetUserName();
+            var userName = _userResolverService.GetUserName;
 
             DateTime UtcNow;
 

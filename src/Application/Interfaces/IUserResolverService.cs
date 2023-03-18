@@ -2,6 +2,6 @@
 {
     public interface IUserResolverService
     {
-        public string? GetUserName();
+        public string? GetUserName { get; }
     }
 }

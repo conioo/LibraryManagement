@@ -7,7 +7,10 @@ using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Sieve.Services;
+using System.Data;
+using System.Diagnostics;
 
 namespace Application.Services
 {
@@ -16,7 +19,7 @@ namespace Application.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        public RoleService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager) : base(identityContext, mapper, sieveProcessor)
+        public RoleService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<RoleService> logger, IUserResolverService userResolverService, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager) : base(identityContext, mapper, sieveProcessor, userResolverService, logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -55,6 +58,8 @@ namespace Application.Services
                     throw new IdentityException(result.Errors);
                 }
             }
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} added role: {roleModificationRequest.RoleId} to users: {String.Join(" ", roleModificationRequest.UsersId)}");
         }
         public async Task RemoveRoleFromUsersAsync(RoleModificationRequest roleModificationRequest)
         {
@@ -90,6 +95,8 @@ namespace Application.Services
                     throw new IdentityException(result.Errors);
                 }
             }
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} removed role: {roleModificationRequest.RoleId} from users: {String.Join(" ", roleModificationRequest.UsersId)}");
         }
         public async Task<IEnumerable<RoleResponse>> GetRolesByUserAsync(string userId)
         {
@@ -139,6 +146,8 @@ namespace Application.Services
                 throw new IdentityException(result.Errors);
             }
 
+            _logger.LogInformation($"{_userResolverService.GetUserName} added role: {role.Id}");
+
             return _mapper.Map<RoleResponse>(role);
         }
         public override async Task UpdateAsync(string id, RoleRequest dto)
@@ -153,6 +162,8 @@ namespace Application.Services
             var updatedEntity = _mapper.Map(dto, existedEntity);
 
             await _roleManager.UpdateAsync(updatedEntity);
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} updated role: {id}");
         }
         public override async Task RemoveAsync(string id)
         {
@@ -164,6 +175,8 @@ namespace Application.Services
             }
 
             await _roleManager.DeleteAsync(existedEntity);
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} removed role: {id}");
         }
     }
 }

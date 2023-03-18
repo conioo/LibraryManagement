@@ -11,6 +11,6 @@ namespace Application.Services
 {
     internal class LibraryService : CommonService<Library, LibraryRequest, LibraryResponse>, ILibraryService
     {
-        public LibraryService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<LibraryService> logger) : base(unitOfWork, mapper, sieveProcessor, logger) { }
+        public LibraryService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<LibraryService> logger, IUserResolverService userResolverService) : base(unitOfWork, mapper, sieveProcessor, logger, userResolverService) { }
     }
 }

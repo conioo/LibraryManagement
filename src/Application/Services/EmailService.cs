@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Domain.Settings;
 using MailKit;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
@@ -11,10 +12,13 @@ namespace Application.Services
     {
         private readonly MailSettings _mailOptions;
         private readonly IMailTransport _transportService;
-        public EmailService(IOptions<MailSettings> mailOptions, IMailTransport transportService)
+        private readonly ILogger<EmailService> _logger;
+
+        public EmailService(IOptions<MailSettings> mailOptions, IMailTransport transportService, ILogger<EmailService> logger)
         {
             _mailOptions = mailOptions.Value;
             _transportService = transportService;
+            _logger = logger;
         }
         public async Task SendAsync(Email dto)
         {
@@ -32,6 +36,8 @@ namespace Application.Services
             _transportService.Authenticate(_mailOptions.Username, _mailOptions.Password);
             _transportService.Send(email);
             _transportService.Disconnect(true);
+
+            _logger.LogInformation($"Email was sent to {dto.To}");
         }
 
     }

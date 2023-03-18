@@ -15,8 +15,9 @@ namespace Application
             services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            //services.AddScoped<IMailTransport, SmtpClient>();
             services.AddSingleton<IMailTransport, SmtpClient>();
+
+            services.AddScoped<IUserResolverService, UserResolverService>();
 
             services.AddScoped<IItemService, ItemService>();
             services.AddScoped<ILibraryService, LibraryService>();

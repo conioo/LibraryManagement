@@ -6,7 +6,7 @@ namespace Domain.Interfaces
 {
     public interface IUnitOfWork
     {
-        public DbSet<TEntity> Set<TEntity>() where TEntity : BaseEntity;
+        public DbSet<TEntity> Set<TEntity>() where TEntity : class;// where TEntity : BaseEntity;
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         public DatabaseFacade Database { get; }
     }

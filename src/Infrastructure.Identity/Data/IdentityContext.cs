@@ -3,26 +3,26 @@ using Application.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Seeds;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-
-//[assembly: InternalsVisibleTo("WebAPITests")]
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Identity.Data
 {
-    public class IdentityContext : IdentityDbContext<ApplicationUser>
+    public class IdentityContext : IdentityDbContext<ApplicationUser>, IUnitOfWork
     {
         private readonly IConfiguration _configuration;
         private readonly IUserResolverService _userResolverService;
+        private readonly ILogger<IdentityContext> _logger;
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-        public IdentityContext(DbContextOptions<IdentityContext> dbContextOptions, IConfiguration configuration, IUserResolverService userResolverService) : base(dbContextOptions)
+        public IdentityContext(DbContextOptions<IdentityContext> dbContextOptions, IConfiguration configuration, IUserResolverService userResolverService, ILogger<IdentityContext> logger) : base(dbContextOptions)
         {
             _configuration = configuration;
             _userResolverService = userResolverService;
+            _logger = logger;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -49,7 +49,10 @@ namespace Infrastructure.Identity.Data
             });
 
             builder.SeedDefaultRoles();
+            _logger.LogDebug("roles seeded");
+
             builder.SeedDefaultUsers();
+            _logger.LogDebug("users seeded");
 
             base.OnModelCreating(builder);
         }
@@ -63,8 +66,8 @@ namespace Infrastructure.Identity.Data
                 return base.SaveChangesAsync(cancellationToken);
             }
 
-            var userName = _userResolverService.GetUserName();
-
+            var userName = _userResolverService.GetUserName;
+            
             DateTime UtcNow;
 
             foreach (var entityEntry in entries)

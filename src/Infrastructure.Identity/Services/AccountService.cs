@@ -12,6 +12,7 @@ using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -21,6 +22,7 @@ namespace Application.Services
     internal class AccountService : IAccountService
     {
         private readonly IMapper _mapper;
+        private readonly ILogger<AccountService> _logger;
         private readonly IJwtService _jwtService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IEmailService _emailService;
@@ -33,7 +35,8 @@ namespace Application.Services
             SignInManager<ApplicationUser> signInManager,
             IJwtService jwtService,
             IOptions<ApplicationSettings> applicationOptions,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<AccountService> logger)
         {
             _jwtService = jwtService;
             _userManager = userManager;
@@ -42,6 +45,7 @@ namespace Application.Services
             _identityContext = identityContext;
             _signInManager = signInManager;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task ChangePasswordAsync(ChangePasswordRequest dto, ClaimsPrincipal claimsPrincipal)
@@ -54,6 +58,8 @@ namespace Application.Services
             {
                 throw new IdentityException(result.Errors);
             }
+
+            _logger.LogInformation($"Change password for {claimsPrincipal.Claims.First(claim => claim.Type == ClaimTypes.Name).Value}");
         }
         public async Task ConfirmEmailAsync(string userId, string token)
         {
@@ -70,6 +76,8 @@ namespace Application.Services
             {
                 throw new IdentityException(result.Errors);
             }
+
+            _logger.LogInformation($"Confirm email for {user.UserName}");
         }
         public async Task<UserResponse> RegisterAsync(RegisterRequest dto)
         {
@@ -93,9 +101,10 @@ namespace Application.Services
 
             var userResponse = _mapper.Map<UserResponse>(newUser);
 
+            _logger.LogInformation($"Register user: {dto.UserName}");
+
             return userResponse;
         }
-      
         public async Task<LoginResponse> LoginAsync(LoginRequest dto)
         {
             var user = await _identityContext.Users.Include(user => user.RefreshToken).SingleOrDefaultAsync(user => user.Email == dto.Email);
@@ -150,6 +159,8 @@ namespace Application.Services
             callbackUrl = QueryHelpers.AddQueryString(callbackUrl, "token", resetToken);
 
             await _emailService.SendAsync(new Email(user.Email, "Reset Password", $"Please reset your password by visiting this URL {callbackUrl}"));
+
+            _logger.LogInformation($"Forgot password for: {user.UserName}");
         }
         public async Task ResetPasswordAsync(ResetPasswordRequest dto)
         {
@@ -166,6 +177,8 @@ namespace Application.Services
             {
                 throw new IdentityException(result.Errors);
             }
+
+            _logger.LogInformation($"Reset password for: {user.UserName}");
         }
         public async Task<string> RefreshToken(string refreshToken)
         {

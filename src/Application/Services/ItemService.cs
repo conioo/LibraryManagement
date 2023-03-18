@@ -14,7 +14,7 @@ namespace Application.Services
 {
     internal class ItemService : CommonService<Item, ItemRequest, ItemResponse>, IItemService
     {
-        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<ItemService> logger) : base(unitOfWork, mapper, sieveProcessor, logger)
+        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<ItemService> logger, IUserResolverService userResolverService) : base(unitOfWork, mapper, sieveProcessor, logger, userResolverService)
         { }
 
     }

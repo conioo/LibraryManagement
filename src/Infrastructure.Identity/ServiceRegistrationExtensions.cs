@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace Application
+namespace Infrastructure.Identity
 {
     public static class ServiceRegistrationExtensions
     {
@@ -24,8 +24,6 @@ namespace Application
             services.AddScoped<IAdminService, AdminService>();
 
             services.AddScoped<IJwtService, JwtService>();
-
-            services.AddScoped<IUserResolverService, UserResolverService>();
 
             services.AddScoped<SignInManager<ApplicationUser>>();
 

@@ -56,7 +56,7 @@ namespace Application.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("UserName", user.UserName),
+                new Claim(ClaimTypes.Name, user.UserName),
             }).ToList();
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.IssuerSigningKey));
