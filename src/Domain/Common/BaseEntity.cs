@@ -6,7 +6,6 @@ namespace Domain.Common
 {
     public abstract class BaseEntity : AuditableEntity
     {
-        //[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; }
     }
 }

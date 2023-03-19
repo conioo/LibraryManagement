@@ -12,8 +12,12 @@ namespace Infrastructure.Persistence.Data
         private readonly IConfiguration _configuration;
         private readonly IUserResolverService _userResolverService;
         public DbSet<Item> Items { get; set; }
+
+        public DbSet<Copy> Copies { get; set; }
         public DbSet<Library> Libraries { get; set; }
-        //public DbSet<Copy> Copies { get; set; }
+        public DbSet<Profil> Profiles { get; set; }
+        public DbSet<Rental> Rentals { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
 
         public LibraryDbContext(DbContextOptions<LibraryDbContext> dbContextOptions) : base(dbContextOptions)
         {
@@ -35,7 +39,6 @@ namespace Infrastructure.Persistence.Data
         {
             builder.Entity<Item>(entityBuilder =>
             {
-                //entityBuilder.Property(entity => entity.Id).HasDefaultValueSql("NEWID()");
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
                 entityBuilder.Property(entity => entity.Title).HasMaxLength(50);
 
@@ -46,14 +49,29 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
             });
 
-            //builder.Entity<Copy>(entityBuilder =>
-            //{
-            //    entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
-            //});
+            builder.Entity<Copy>(entityBuilder =>
+            {
+                entityBuilder.HasKey(entity => entity.InventoryNumber);
 
+                entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
+            });
 
+            builder.Entity<Profil>(entityBuilder =>
+            {
+                entityBuilder.HasKey(entity => entity.LibraryCardNumber);
 
+                entityBuilder.Property(entity => entity.LibraryCardNumber).ValueGeneratedOnAdd();
+            });
 
+            builder.Entity<Rental>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<Reservation>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
 
             base.OnModelCreating(builder);
         }

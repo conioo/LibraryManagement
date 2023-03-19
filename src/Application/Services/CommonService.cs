@@ -1,5 +1,6 @@
 ﻿using Application.Dtos.Response;
 using Application.Exceptions;
+using Application.Extensions;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -64,7 +65,7 @@ namespace Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation($"{_userResolverService.GetUserName} added the {typeof(T).Name} with id: {((dynamic)entityEntry.Entity).Id}");
+            _logger.LogInformation($"{_userResolverService.GetUserName} added the {typeof(T).Name} with id: {entityEntry.GetPrimaryKey()}");
 
             return _mapper.Map<TResponse>(entityEntry.Entity);
         }
