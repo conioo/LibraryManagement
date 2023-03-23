@@ -1,13 +1,8 @@
-﻿using Application.Dtos.Response;
-using Application.Exceptions;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Application.Services;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Infrastructure.Identity.Data;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Sieve.Models;
 using Sieve.Services;
 
 namespace Infrastructure.Identity.Services

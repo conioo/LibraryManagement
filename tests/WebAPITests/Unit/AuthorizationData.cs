@@ -66,6 +66,10 @@ namespace WebAPITests.Unit
                     new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
                     new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
                     new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
+
+                    new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
+                    new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
                 };
             }
         }
@@ -99,6 +103,10 @@ namespace WebAPITests.Unit
                     new object[]{Libraries.Prefix, Libraries.GetAllLibraries, HttpMethod.Get },
                     new object[]{Libraries.Prefix, Libraries.GetLibraryById, HttpMethod.Get },
                     new object[]{Libraries.Prefix, Libraries.GetPage, HttpMethod.Get },
+
+                    new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
+                    new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
                 };
             }
         }
@@ -180,6 +188,10 @@ namespace WebAPITests.Unit
                     new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
                     new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
                     new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
+
+                    new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
+                    new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
                 };
             }
         }
@@ -249,6 +261,10 @@ namespace WebAPITests.Unit
                     new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
                     new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
                     new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
+
+                    new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
+                    new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
                 };
             }
         }

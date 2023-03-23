@@ -23,13 +23,11 @@ namespace WebAPI.Controllers
     {
         private readonly IItemService _service;
         private readonly ApplicationSettings _options;
-        private readonly ILogger<ItemsController> _logger;
 
-        public ItemsController(IItemService service, IOptions<ApplicationSettings> options, ILogger<ItemsController> logger)
+        public ItemsController(IItemService service, IOptions<ApplicationSettings> options)
         {
             _service = service;
             _options = options.Value;
-            _logger = logger;
         }
 
         [HttpGet(ApiRoutes.Items.GetAllItems)]
@@ -86,8 +84,6 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> AddItemsAsync([FromBody] IEnumerable<ItemRequest> dtos)
         {
             await _service.AddRangeAsync(dtos);
-
-            _logger.LogInformation($"{User.Identity.Name} added {dtos.Count()}items");
 
             return Ok();
         }

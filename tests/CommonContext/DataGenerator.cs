@@ -10,7 +10,7 @@ namespace CommonContext
 {
     public static class DataGenerator
     {
-        private static readonly Dictionary<Type, dynamic> _generators = new Dictionary<Type, dynamic>(); 
+        private static readonly Dictionary<Type, dynamic> _generators = new Dictionary<Type, dynamic>();
         private static readonly Dictionary<Type, Type> _domainTypes = new Dictionary<Type, Type>();
         public static readonly IMapper _mapper;
 
@@ -68,6 +68,12 @@ namespace CommonContext
                .RuleFor(Library => Library.IsPrinter, faker => faker.Random.Bool())
                .RuleFor(Library => Library.IsPhotocopier, faker => faker.Random.Bool());
 
+            var CopyGenerator = new Faker<Copy>()
+                .RuleFor(copy => copy.Item, faker => itemGenerator.Generate())
+                .RuleFor(copy => copy.Library, faker => libraryGenerator.Generate());
+
+
+
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
             applicationUserGenerator.UseSeed(93842421);
@@ -79,6 +85,7 @@ namespace CommonContext
             _generators[typeof(ApplicationUser)] = applicationUserGenerator;
             _generators[typeof(IdentityRole)] = identityRoleGenerator;
             _generators[typeof(Library)] = libraryGenerator;
+            _generators[typeof(Copy)] = CopyGenerator;
         }
 
         public static IEnumerable<T> Get<T>(int number)
