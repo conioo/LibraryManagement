@@ -3,5 +3,6 @@
     public interface IUserResolverService
     {
         public string? GetUserName { get; }
+        public string? GetUserId { get; }
     }
 }

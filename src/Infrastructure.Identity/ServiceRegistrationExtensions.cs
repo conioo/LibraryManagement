@@ -18,6 +18,8 @@ namespace Infrastructure.Identity
         {
             services.AddDbContext<IdentityContext>();
 
+            services.AddScoped<IUserResolverService, UserResolverService>();
+
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();

@@ -1,5 +1,6 @@
 ﻿using Application.Dtos.Identity.Request;
 using Application.Dtos.Identity.Response;
+using Application.Dtos.Request;
 using Application.Exceptions;
 using Application.Interfaces;
 using AutoMapper;
@@ -90,6 +91,31 @@ namespace Application.Services
             await _identityContext.SaveChangesAsync();
 
             _logger.LogInformation($"{_userResolverService.GetUserName} updated user: {user.Id}");
+        }
+
+        public async Task BindProfil(string userId, string profilId, ProfileRequest dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
+            if(user.ProfileId is not null)
+            {
+                throw new BadRequestException();
+            }
+
+            user.ProfileId = profilId;
+            user.PhoneNumber = dto.PhoneNumber;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (result.Succeeded is false)
+            {
+                throw new IdentityException(result.Errors);
+            }
         }
     }
 }

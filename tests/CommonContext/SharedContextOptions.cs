@@ -9,5 +9,7 @@
         public bool addOldFakePolicyEvaluator = false;
 
         public bool addEmailServiceMock = false;
+
+        public bool generateDefaultUser = false;
     }
 }

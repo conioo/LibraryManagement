@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace Application.Services
+namespace Infrastructure.Identity.Services
 {
     public class UserResolverService : IUserResolverService
     {
@@ -26,6 +26,24 @@ namespace Application.Services
                 }
 
                 return _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Name)?.Value;
+            }
+        }
+
+        public string? GetUserId
+        {
+            get
+            {
+                if (_httpContextAccessor.HttpContext is null)
+                {
+                    return null;
+                }
+
+                if (_httpContextAccessor.HttpContext.User.Identity is null)
+                {
+                    return null;
+                }
+
+                return _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             }
         }
     }

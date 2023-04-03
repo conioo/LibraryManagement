@@ -25,10 +25,7 @@ namespace WebAPITests.Integration
             _sharedContext = sharedContextBuilder.Value;
             _client = _sharedContext.CreateClient();
 
-            _defaultUser = DataGenerator.Get<ApplicationUser>(1).First();
-            _defaultUser.UserName = "default";
-
-            _sharedContext.UserManager.CreateAsync(_defaultUser, DataGenerator.GetUserPassword).Wait();
+            _defaultUser = _sharedContext.DefaultUser;
 
             _library = DataGenerator.Get<Library>(1).First();
             _item = DataGenerator.Get<Item>(1).First();

@@ -3,17 +3,15 @@ using WebAPI.ApiRoutes;
 
 namespace WebAPITests.Integration.SharedContextBuilders
 {
-    public class CopiesContextBuilder : ISharedContextBuilder
+    public class ProfilesContextBuilder : ISharedContextBuilder
     {
-        public CopiesContextBuilder()
+        public ProfilesContextBuilder()
         {
             Value = new SharedContext(options =>
             {
-                options.controllerPrefix = Copies.Prefix;
+                options.controllerPrefix = Profiles.Prefix;
                 options.addFakePolicyEvaluator = true;
-                options.generateDefaultUser = true;
             });
-            
         }
         public SharedContext Value { get; }
     }

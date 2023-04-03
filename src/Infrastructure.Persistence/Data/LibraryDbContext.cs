@@ -15,7 +15,7 @@ namespace Infrastructure.Persistence.Data
 
         public DbSet<Copy> Copies { get; set; }
         public DbSet<Library> Libraries { get; set; }
-        public DbSet<Profil> Profiles { get; set; }
+        public DbSet<Profile> Profiles { get; set; }
         public DbSet<Rental> Rentals { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
 
@@ -56,7 +56,7 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
             });
 
-            builder.Entity<Profil>(entityBuilder =>
+            builder.Entity<Profile>(entityBuilder =>
             {
                 entityBuilder.HasKey(entity => entity.LibraryCardNumber);
 

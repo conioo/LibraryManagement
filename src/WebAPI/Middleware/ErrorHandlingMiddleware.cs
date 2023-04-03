@@ -48,6 +48,12 @@ namespace WebAPI.Middleware
 
                 await context.Response.WriteAsync(exception.Message);
             }
+            catch(BadRequestException exception)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+
+                await context.Response.WriteAsync(exception.Message);
+            }
             catch (ApiException exception)
             {
                 context.Response.StatusCode = 500;

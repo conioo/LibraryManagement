@@ -9,7 +9,9 @@ namespace Domain.Entities
         public DateTime BeginTime { get; set; }
         public DateTime EndTime { get; set; }
 
-        public virtual Profil Profil { get; set; }
+        public bool Received { get; set; } = false;
+
+        public virtual Profile Profil { get; set; }
         public virtual Copy Copy { get; set; }
     }
 }

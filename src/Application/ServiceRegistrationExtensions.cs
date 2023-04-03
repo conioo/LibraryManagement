@@ -17,11 +17,12 @@ namespace Application
 
             services.AddSingleton<IMailTransport, SmtpClient>();
 
-            services.AddScoped<IUserResolverService, UserResolverService>();
+            
 
             services.AddScoped<IItemService, ItemService>();
             services.AddScoped<ILibraryService, LibraryService>();
             services.AddScoped<ICopyService, CopyService>();
+            services.AddScoped<IProfileService, ProfileService>();
 
             services.AddSingleton<IEmailService, EmailService>();
 

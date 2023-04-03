@@ -5,6 +5,7 @@ using Bogus;
 using Domain.Entities;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
+using Profile = Domain.Entities.Profile;
 
 namespace CommonContext
 {
@@ -68,11 +69,26 @@ namespace CommonContext
                .RuleFor(Library => Library.IsPrinter, faker => faker.Random.Bool())
                .RuleFor(Library => Library.IsPhotocopier, faker => faker.Random.Bool());
 
-            var CopyGenerator = new Faker<Copy>()
+            var copyGenerator = new Faker<Copy>()
                 .RuleFor(copy => copy.Item, faker => itemGenerator.Generate())
                 .RuleFor(copy => copy.Library, faker => libraryGenerator.Generate());
 
+            var profileGenerator = new Faker<Profile>()
+                .RuleFor(profile => profile.UserId, faker => "empty_user_id");
 
+            var rentalGenerator = new Faker<Rental>()
+                .RuleFor(rental => rental.Returned, faker => true)
+                .RuleFor(rental => rental.BeginTime, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
+                .RuleFor(rental => rental.EndTime, (faker, rental) => faker.Date.Between(rental.BeginTime.AddDays(1), rental.BeginTime.AddMonths(1)))
+                .RuleFor(rental => rental.Copy, faker => copyGenerator.Generate())
+                .RuleFor(rental => rental.Profil, faker => profileGenerator.Generate());
+
+            var reservationGenerator = new Faker<Reservation>()
+                .RuleFor(rental => rental.Received, faker => false)
+                .RuleFor(rental => rental.BeginTime, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
+                .RuleFor(rental => rental.EndTime, (faker, rental) => faker.Date.Between(rental.BeginTime.AddDays(1), rental.BeginTime.AddDays(8)))
+                .RuleFor(rental => rental.Copy, faker => copyGenerator.Generate())
+                .RuleFor(rental => rental.Profil, faker => profileGenerator.Generate());
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
@@ -85,7 +101,9 @@ namespace CommonContext
             _generators[typeof(ApplicationUser)] = applicationUserGenerator;
             _generators[typeof(IdentityRole)] = identityRoleGenerator;
             _generators[typeof(Library)] = libraryGenerator;
-            _generators[typeof(Copy)] = CopyGenerator;
+            _generators[typeof(Copy)] = copyGenerator;
+            _generators[typeof(Rental)] = rentalGenerator;
+            _generators[typeof(Reservation)] = reservationGenerator;
         }
 
         public static IEnumerable<T> Get<T>(int number)

@@ -1,7 +1,6 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
 using CommonContext;
-using CommonContext.SharedContextBuilders;
 using Domain.Entities;
 using FluentAssertions;
 using Infrastructure.Identity.Entities;
@@ -26,10 +25,7 @@ namespace WebAPITests.Integration
             _sharedContext = sharedContextBuilder.Value;
             _client = _sharedContext.CreateClient();
 
-            _defaultUser = DataGenerator.Get<ApplicationUser>(1).First();
-            _defaultUser.UserName = "default";
-
-            _sharedContext.UserManager.CreateAsync(_defaultUser, DataGenerator.GetUserPassword).Wait();
+            _defaultUser = _sharedContext.DefaultUser;
 
             _libraries = (List<Library>)DataGenerator.Get<Library>(4);
 

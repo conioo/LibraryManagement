@@ -6,6 +6,7 @@ using Domain.Interfaces;
 using Domain.Settings;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Roles;
 using Infrastructure.Persistence.Data;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Hosting;
@@ -31,6 +32,8 @@ namespace WebAPITests.Integration
         public UserManager<ApplicationUser> UserManager { get; set; }
         public JwtSettings JwtSettings { get; set; }
         public IJwtService JwtService { get; set; }
+
+        public ApplicationUser? DefaultUser { get; set; }
 
         private Dictionary<Type, object> Mocks { get; set; } = new Dictionary<Type, object>();
 
@@ -82,6 +85,11 @@ namespace WebAPITests.Integration
             else
             {
                 ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/{_options.controllerPrefix}/");
+            }
+
+            if(_options.generateDefaultUser is true)
+            {
+                DefaultUser = GetDefaultUser();
             }
         }
 
@@ -190,6 +198,32 @@ namespace WebAPITests.Integration
             var responseLogin = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
             return responseLogin;
+        }
+
+        public ApplicationUser GetDefaultUser()
+        {
+            var defaultUser = DataGenerator.Get<ApplicationUser>(1).First();
+            defaultUser.UserName = "default";
+
+            UserManager.CreateAsync(defaultUser, DataGenerator.GetUserPassword);
+
+            return defaultUser;
+        }
+
+        public async Task<ApplicationUser> GetBasicConfirmUser()
+        {
+            var user = DataGenerator.Get<ApplicationUser>(1).First();
+
+            await UserManager.CreateAsync(user, DataGenerator.GetUserPassword);
+
+            var token = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+
+            await UserManager.AddToRoleAsync(user, UserRoles.Basic);
+            await UserManager.ConfirmEmailAsync(user, token);
+
+            RefreshIdentityDb();
+
+            return user;
         }
     }
 }

@@ -10,7 +10,10 @@ namespace Domain.Entities
         public DateTime BeginTime { get; set; }
         public DateTime EndTime { get; set; }
 
-        public virtual Profil Profil { get; set; }
+        public virtual Profile Profil { get; set; }
         public virtual Copy Copy { get; set; }
+
+        public string ProfilLibraryCardNumber { get; set; }
+        public string CopyInventoryNumber { get; set; }
     }
 }
