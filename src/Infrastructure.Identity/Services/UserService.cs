@@ -117,5 +117,17 @@ namespace Application.Services
                 throw new IdentityException(result.Errors);
             }
         }
+
+        public async Task<string> GetEmail(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
+            return user.Email;
+        }
     }
 }

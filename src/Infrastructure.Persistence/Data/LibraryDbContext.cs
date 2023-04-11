@@ -54,6 +54,14 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.HasKey(entity => entity.InventoryNumber);
 
                 entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
+
+                entityBuilder.HasOne(copy => copy.LastRental)
+                .WithOne(rental => rental.Copy)
+                .HasForeignKey<Copy>(copy => copy.LastRentalId);
+
+                entityBuilder.HasOne(copy => copy.LastReservation)
+               .WithOne(reservation => reservation.Copy)
+               .HasForeignKey<Copy>(copy => copy.LastReservationId);
             });
 
             builder.Entity<Profile>(entityBuilder =>
@@ -69,6 +77,11 @@ namespace Infrastructure.Persistence.Data
             });
 
             builder.Entity<Reservation>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<History>(entityBuilder =>
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
             });

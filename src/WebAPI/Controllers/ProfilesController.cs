@@ -65,7 +65,7 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber)]
+        [HttpGet(Profiles.GetProfileByCardNumber+"his")]
         [SwaggerOperation(Summary = "Returns profile with history")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -77,7 +77,7 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber)]
+        [HttpGet(Profiles.GetProfileByCardNumber+"un")]
         [SwaggerOperation(Summary = "Returns unreturned history rentals")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -89,7 +89,7 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber)]
+        [HttpGet(Profiles.GetProfileByCardNumber+"rec")]
         [SwaggerOperation(Summary = "Returns unreceived history reservations")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

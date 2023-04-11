@@ -16,6 +16,9 @@ namespace WebAPI.Installers
 
             services.AddOptions<SieveOptions>().Bind(configuration.GetSection("Sieve"));
             services.AddOptions<UserNameSettings>().Bind(configuration.GetSection("Accounts").GetSection("UserName"));
+
+            services.AddOptions<ReservationSettings>().Bind(configuration.GetSection("Application").GetSection("Reservation"));
+            services.AddOptions<RentalSettings>().Bind(configuration.GetSection("Application").GetSection("Rental"));
         }
     }
 }

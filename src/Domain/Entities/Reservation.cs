@@ -11,7 +11,7 @@ namespace Domain.Entities
 
         public bool Received { get; set; } = false;
 
-        public virtual Profile Profil { get; set; }
+        public virtual Profile Profile { get; set; }
         public virtual Copy Copy { get; set; }
     }
 }

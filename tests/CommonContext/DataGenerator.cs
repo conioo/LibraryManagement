@@ -77,18 +77,18 @@ namespace CommonContext
                 .RuleFor(profile => profile.UserId, faker => "empty_user_id");
 
             var rentalGenerator = new Faker<Rental>()
-                .RuleFor(rental => rental.Returned, faker => true)
+                .RuleFor(rental => rental.IsReturned, faker => true)
                 .RuleFor(rental => rental.BeginTime, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
                 .RuleFor(rental => rental.EndTime, (faker, rental) => faker.Date.Between(rental.BeginTime.AddDays(1), rental.BeginTime.AddMonths(1)))
                 .RuleFor(rental => rental.Copy, faker => copyGenerator.Generate())
-                .RuleFor(rental => rental.Profil, faker => profileGenerator.Generate());
+                .RuleFor(rental => rental.Profile, faker => profileGenerator.Generate());
 
             var reservationGenerator = new Faker<Reservation>()
                 .RuleFor(rental => rental.Received, faker => false)
                 .RuleFor(rental => rental.BeginTime, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
                 .RuleFor(rental => rental.EndTime, (faker, rental) => faker.Date.Between(rental.BeginTime.AddDays(1), rental.BeginTime.AddDays(8)))
                 .RuleFor(rental => rental.Copy, faker => copyGenerator.Generate())
-                .RuleFor(rental => rental.Profil, faker => profileGenerator.Generate());
+                .RuleFor(rental => rental.Profile, faker => profileGenerator.Generate());
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);

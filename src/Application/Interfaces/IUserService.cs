@@ -11,5 +11,6 @@ namespace Application.Interfaces
         public Task UpdateAsync(ClaimsPrincipal principal, UpdateUserRequest dto);
 
         public Task BindProfil(string userId, string profilId, ProfileRequest dto);
+        public Task<string> GetEmail(string userId);
     }
 }

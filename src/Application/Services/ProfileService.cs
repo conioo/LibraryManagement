@@ -72,23 +72,24 @@ namespace Application.Services
 
         public async Task<ProfileResponse> GetProfileWithHistoryByCardNumberAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
-                .Include(profile => profile.HistoryRentals)
-                .ThenInclude(rental => rental.Copy)
-                .ThenInclude(copy => copy.Item)
-                .Include(profile => profile.HistoryReservations)
-                .ThenInclude(reservation => reservation.Copy)
-                .ThenInclude(copy => copy.Item)
-                .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
+            //var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
+            //    .Include(profile => profile.HistoryRentals)
+            //    .ThenInclude(rental => rental.Copy)
+            //    .ThenInclude(copy => copy.Item)
+            //    .Include(profile => profile.HistoryReservations)
+            //    .ThenInclude(reservation => reservation.Copy)
+            //    .ThenInclude(copy => copy.Item)
+            //    .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
 
-            if (profile is null)
-            {
-                throw new NotFoundException();
-            }
+            //if (profile is null)
+            //{
+            //    throw new NotFoundException();
+            //}
 
-            var response = _mapper.Map<ProfileResponse>(profile);
+            //var response = _mapper.Map<ProfileResponse>(profile);
 
-            return response;
+            //return response;
+            return null;
         }
 
         public async Task<ProfileResponse> GetProfileByCardNumberAsync(string cardNumber)
@@ -107,52 +108,55 @@ namespace Application.Services
 
         public async Task<IEnumerable<RentalResponse>> GetRentalHistoryAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
-                .Include(profile => profile.HistoryRentals)
-                .ThenInclude(rental => rental.Copy)
-                .ThenInclude(copy => copy.Item)
-                .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
+            //var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
+            //    .Include(profile => profile.HistoryRentals)
+            //    .ThenInclude(rental => rental.Copy)
+            //    .ThenInclude(copy => copy.Item)
+            //    .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
 
-            if (profile is null)
-            {
-                throw new NotFoundException();
-            }
+            //if (profile is null)
+            //{
+            //    throw new NotFoundException();
+            //}
 
-            var response = _mapper.Map<IEnumerable<RentalResponse>>(profile.HistoryRentals);
+            //var response = _mapper.Map<IEnumerable<RentalResponse>>(profile.HistoryRentals);
 
-            return response;
+            //return response;
+            return null;
         }
 
         public async Task<IEnumerable<ReservationResponse>> GetReservationHistoryAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
-                .Include(profile => profile.HistoryReservations)
-                .ThenInclude(reservation => reservation.Copy)
-                .ThenInclude(copy => copy.Item)
-                .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
+            //var profile = await _unitOfWork.Set<Profile>().AsNoTracking()
+            //    .Include(profile => profile.HistoryReservations)
+            //    .ThenInclude(reservation => reservation.Copy)
+            //    .ThenInclude(copy => copy.Item)
+            //    .FirstAsync(profile => profile.LibraryCardNumber == cardNumber);
 
-            if (profile is null)
-            {
-                throw new NotFoundException();
-            }
+            //if (profile is null)
+            //{
+            //    throw new NotFoundException();
+            //}
 
-            var response = _mapper.Map<IEnumerable<ReservationResponse>>(profile.HistoryRentals);
+            //var response = _mapper.Map<IEnumerable<ReservationResponse>>(profile.HistoryRentals);
 
-            return response;
+            //return response;
+            return null;
         }
 
-        public async Task<IEnumerable<ReservationResponse>> GetUnreturnedRentalsAsync(string cardNumber)
+        public async Task<IEnumerable<RentalResponse>> GetUnreturnedRentalsAsync(string cardNumber)
         {
-           // var profile = await _unitOfWork.Set<Profile>().AsNoTracking().whe
+            //var profile = await _unitOfWork.Set<Profile>().FindAsync(cardNumber);
 
-            if (profile is null)
-            {
-                throw new NotFoundException();
-            }
+            //if (profile is null)
+            //{
+            //    throw new NotFoundException();
+            //}
 
-            var response = _mapper.Map<IEnumerable<RentalResponse>>(profile.HistoryRentals);
+            //var response = _mapper.Map<IEnumerable<RentalResponse>>(profile.HistoryRentals);
 
-            return response;
+            //return response;
+            return null;
         }
 
         public Task<IEnumerable<ReservationResponse>> GetUnreceivedReservationsAsync(string cardNumber)

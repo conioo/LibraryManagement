@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Serilog;
 using WebAPI.Conventions;
+using WebAPI.Extensions;
 using WebAPI.Installers.Extensions;
 using WebAPI.Middleware;
 
@@ -27,10 +28,11 @@ namespace WebAPI
             builder.Services.AddInfrastructurePersistence();
             builder.Services.AddInfrastructureIdentity(builder.Configuration);
 
-
             //builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
+
+            app.UseReactiveComponents();
 
             app.UseSerilogRequestLogging();
 
@@ -55,7 +57,6 @@ namespace WebAPI
 
             app.MapControllers();
             app.UseAuthorization();
-
 
             app.Run();
         }

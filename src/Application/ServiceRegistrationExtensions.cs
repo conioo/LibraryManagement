@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces;
+using Application.Reactive.Interfaces;
+using Application.Reactive.Observers;
 using Application.Services;
 using Application.Sieve;
 using MailKit;
@@ -17,7 +19,9 @@ namespace Application
 
             services.AddSingleton<IMailTransport, SmtpClient>();
 
-            
+            services.AddSingleton<IEndOfReservation, EndOfReservation>();
+            services.AddSingleton<IStartingCountingOfPenaltyCharges, StartingCountingOfPenaltyCharges>();
+            services.AddSingleton<ICountingOfPenaltyCharges, CountingOfPenaltyCharges>();
 
             services.AddScoped<IItemService, ItemService>();
             services.AddScoped<ILibraryService, LibraryService>();

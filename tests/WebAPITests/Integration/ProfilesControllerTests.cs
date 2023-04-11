@@ -36,8 +36,8 @@ namespace WebAPITests.Integration
             var rentals = DataGenerator.Get<Rental>(1);
             var reservations = DataGenerator.Get<Reservation>(1);
 
-            profile.HistoryRentals = (ICollection<Rental>)rentals;
-            profile.HistoryReservations = (ICollection<Reservation>)reservations;
+           // profile.HistoryRentals = (ICollection<Rental>)rentals;
+           // profile.HistoryReservations = (ICollection<Reservation>)reservations;
 
             _sharedContext.DbContext.Set<Profile>().Add(profile);
 

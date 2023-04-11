@@ -4,6 +4,7 @@ using Infrastructure.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    partial class LibraryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230410173605_add_history_entity")]
+    partial class add_history_entity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,7 +261,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<decimal?>("PenaltyCharge")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("ProfileLibraryCardNumber")
+                    b.Property<string>("ProfilLibraryCardNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -267,7 +269,7 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HistoryId");
 
-                    b.HasIndex("ProfileLibraryCardNumber");
+                    b.HasIndex("ProfilLibraryCardNumber");
 
                     b.ToTable("Rentals");
                 });
@@ -299,7 +301,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProfileLibraryCardNumber")
+                    b.Property<string>("ProfilLibraryCardNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
@@ -310,7 +312,7 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HistoryId");
 
-                    b.HasIndex("ProfileLibraryCardNumber");
+                    b.HasIndex("ProfilLibraryCardNumber");
 
                     b.ToTable("Reservations");
                 });
@@ -363,13 +365,13 @@ namespace Infrastructure.Persistence.Migrations
                         .WithMany("HistoryRentals")
                         .HasForeignKey("HistoryId");
 
-                    b.HasOne("Domain.Entities.Profile", "Profile")
+                    b.HasOne("Domain.Entities.Profile", "Profil")
                         .WithMany()
-                        .HasForeignKey("ProfileLibraryCardNumber")
+                        .HasForeignKey("ProfilLibraryCardNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Profile");
+                    b.Navigation("Profil");
                 });
 
             modelBuilder.Entity("Domain.Entities.Reservation", b =>
@@ -378,13 +380,13 @@ namespace Infrastructure.Persistence.Migrations
                         .WithMany("HistoryReservations")
                         .HasForeignKey("HistoryId");
 
-                    b.HasOne("Domain.Entities.Profile", "Profile")
+                    b.HasOne("Domain.Entities.Profile", "Profil")
                         .WithMany()
-                        .HasForeignKey("ProfileLibraryCardNumber")
+                        .HasForeignKey("ProfilLibraryCardNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Profile");
+                    b.Navigation("Profil");
                 });
 
             modelBuilder.Entity("Domain.Entities.History", b =>
