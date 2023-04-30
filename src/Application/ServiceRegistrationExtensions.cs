@@ -20,7 +20,6 @@ namespace Application
             services.AddSingleton<IMailTransport, SmtpClient>();
 
             services.AddSingleton<IEndOfReservation, EndOfReservation>();
-            services.AddSingleton<IStartingCountingOfPenaltyCharges, StartingCountingOfPenaltyCharges>();
             services.AddSingleton<ICountingOfPenaltyCharges, CountingOfPenaltyCharges>();
 
             services.AddScoped<IItemService, ItemService>();

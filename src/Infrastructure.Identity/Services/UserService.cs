@@ -93,7 +93,7 @@ namespace Application.Services
             _logger.LogInformation($"{_userResolverService.GetUserName} updated user: {user.Id}");
         }
 
-        public async Task BindProfil(string userId, string profilId, ProfileRequest dto)
+        public async Task BindProfil(string userId, string profileCardNumber, ProfileRequest dto)
         {
             var user = await _userManager.FindByIdAsync(userId);
 
@@ -102,12 +102,12 @@ namespace Application.Services
                 throw new NotFoundException();
             }
 
-            if(user.ProfileId is not null)
+            if(user.ProfileCardNumber is not null)
             {
-                throw new BadRequestException();
+                throw new BadRequestException($"Profile already exists for user {userId}");
             }
 
-            user.ProfileId = profilId;
+            user.ProfileCardNumber = profileCardNumber;
             user.PhoneNumber = dto.PhoneNumber;
 
             var result = await _userManager.UpdateAsync(user);

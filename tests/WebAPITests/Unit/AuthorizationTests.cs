@@ -2,6 +2,7 @@
 using CommonContext.SharedContextBuilders;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Net.Http.Headers;
 using WebAPITests.Integration;
@@ -29,7 +30,36 @@ namespace WebAPITests.Unit
             _basicResponse = contextBuilder._basicResponse;
         }
 
-        //admin to nie admin
+        [Theory]
+        [MemberData(nameof(AuthorizationData.CorrectAuthorizationForAnonymous), MemberType = typeof(AuthorizationData))]
+        public async Task AuthorizationForAnonymous_ForCorrectEndpoints_CorrectlyAuthorize(string prefix, string patch, HttpMethod method)
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = method,
+                RequestUri = new Uri($"{_client.BaseAddress}{prefix}/{patch}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().NotBe(HttpStatusCode.Unauthorized).And.NotBe(HttpStatusCode.Forbidden);
+        }
+
+        [Theory]
+        [MemberData(nameof(AuthorizationData.InCorrectAuthorizationForAnonymous), MemberType = typeof(AuthorizationData))]
+        public async Task AuthorizationForAnonymous_ForInCorrectEndpoints_InCorrectlyAuthorize(string prefix, string patch, HttpMethod method)
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = method,
+                RequestUri = new Uri($"{_client.BaseAddress}{prefix}/{patch}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        }
+
         [Theory]
         [MemberData(nameof(AuthorizationData.CorrectAuthorizationForRoleBasic), MemberType = typeof(AuthorizationData))]
         public async Task AuthorizationForRoleBasic_ForCorrectEndpoints_CorrectlyAuthorize(string prefix, string patch, HttpMethod method)
@@ -63,7 +93,6 @@ namespace WebAPITests.Unit
 
             response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         }
-
 
         [Theory]
         [MemberData(nameof(AuthorizationData.CorrectAuthorizationForRoleWorker), MemberType = typeof(AuthorizationData))]

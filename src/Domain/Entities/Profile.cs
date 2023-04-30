@@ -8,9 +8,11 @@ namespace Domain.Entities
     {
         public string LibraryCardNumber { get; set; }
         public string UserId { get; set; }
-
         public bool IsActive { get; set; } = false;
 
-        public History? History { get; set; }
+        public virtual ProfileHistory ProfileHistory { get; set; }
+
+        public virtual ICollection<Rental>? CurrrentRentals { get; set; }
+        public virtual ICollection<Reservation>? CurrrentReservations { get; set; }
     }
 }

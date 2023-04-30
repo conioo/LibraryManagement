@@ -4,6 +4,7 @@ using Infrastructure.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    partial class LibraryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230426191102_modify_archive")]
+    partial class modify_archive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -315,16 +317,11 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ProfileHistoryId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("LibraryCardNumber");
-
-                    b.HasIndex("ProfileHistoryId");
 
                     b.ToTable("Profiles");
                 });
@@ -498,15 +495,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Item");
 
                     b.Navigation("Library");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Profile", b =>
-                {
-                    b.HasOne("Domain.Entities.ProfileHistory", "ProfileHistory")
-                        .WithMany()
-                        .HasForeignKey("ProfileHistoryId");
-
-                    b.Navigation("ProfileHistory");
                 });
 
             modelBuilder.Entity("Domain.Entities.Rental", b =>

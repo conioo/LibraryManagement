@@ -28,6 +28,7 @@ namespace CommonContext
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim("ProfileCardNumber", user.ProfileCardNumber is null?"":user.ProfileCardNumber),
             }));
 
             var ticket = new AuthenticationTicket(claimsPrincipal, JwtBearerDefaults.AuthenticationScheme);

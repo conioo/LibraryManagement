@@ -1,4 +1,7 @@
-﻿using Domain.Entities;
+﻿#pragma warning disable CS8618
+
+using Application.Dtos.Response.Archive;
+using Domain.Entities;
 
 namespace Application.Dtos.Response
 {
@@ -9,7 +12,9 @@ namespace Application.Dtos.Response
 
         public bool IsActive { get; set; }
 
-        public IEnumerable<RentalResponse>? HistoryRentals { get; set; }
-        public IEnumerable<ReservationResponse>? HistoryReservations { get; set; }
+        public ICollection<RentalResponse>? CurrrentRentals { get; set; }
+        public ICollection<ReservationResponse>? CurrrentReservations { get; set; }
+
+        public ProfileHistoryResponse? ProfileHistory { get; set; }
     }
 }

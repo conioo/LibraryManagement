@@ -78,7 +78,7 @@ namespace WebAPITests.Integration
             IdentityDbContext.Database.EnsureCreated();
             DbContext.Database.EnsureCreated();
 
-            if(String.IsNullOrEmpty(_options.controllerPrefix))
+            if (String.IsNullOrEmpty(_options.controllerPrefix))
             {
                 ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/");
             }
@@ -87,7 +87,7 @@ namespace WebAPITests.Integration
                 ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/{_options.controllerPrefix}/");
             }
 
-            if(_options.generateDefaultUser is true)
+            if (_options.generateDefaultUser is true)
             {
                 DefaultUser = GetDefaultUser();
             }
@@ -113,6 +113,8 @@ namespace WebAPITests.Integration
             IdentityDbContext = serviceProvider.GetRequiredService<IdentityContext>();
             UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             JwtService = serviceProvider.GetRequiredService<IJwtService>();
+
+            // add another
         }
 
         public Mock<T> GetMock<T>() where T : class
@@ -142,8 +144,16 @@ namespace WebAPITests.Integration
                 services.Remove(dbContextOptions);
                 services.Remove(identityDbContextOptions);
 
-                services.AddDbContext<IUnitOfWork, LibraryDbContext>(options => options.UseInMemoryDatabase("inMemoryDb" + _options.controllerPrefix));
-                services.AddDbContext<IdentityContext>(options => options.UseInMemoryDatabase("inMemoryDb-Identity" + _options.controllerPrefix));
+                services.AddDbContext<IUnitOfWork, LibraryDbContext>(options =>
+                {
+                    options.EnableSensitiveDataLogging(true);
+                    options.UseInMemoryDatabase("inMemoryDb" + _options.controllerPrefix);
+                });
+                services.AddDbContext<IdentityContext>(options =>
+                {
+                    options.EnableSensitiveDataLogging();
+                    options.UseInMemoryDatabase("inMemoryDb-Identity" + _options.controllerPrefix);
+                });
 
                 if (_options.addFakePolicyEvaluator)
                 {

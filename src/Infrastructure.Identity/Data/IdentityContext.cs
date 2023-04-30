@@ -68,21 +68,21 @@ namespace Infrastructure.Identity.Data
 
             var userName = _userResolverService.GetUserName;
             
-            DateTime UtcNow;
+            DateTime now;
 
             foreach (var entityEntry in entries)
             {
-                UtcNow = DateTime.UtcNow;
+                now = DateTime.Now;
 
                 var auditable = (IAuditableEntity)entityEntry.Entity;
 
                 auditable.LastModifiedBy = userName;
-                auditable.LastModified = UtcNow;
+                auditable.LastModified = now;
 
                 if (entityEntry.State == EntityState.Added)
                 {
                     auditable.CreatedBy = userName;
-                    auditable.Created = UtcNow;
+                    auditable.Created = now;
                 }
             }
 

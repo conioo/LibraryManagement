@@ -10,10 +10,10 @@ namespace Domain.Entities
         public bool IsAvailable { get; set; } = true;
         public virtual Item Item { get; set; }
         public virtual Library Library { get; set; }
-        public virtual History? History { get; set; }
-        public virtual Rental? LastRental { get; set; }
-        public virtual string? LastRentalId { get; set; }
-        public virtual Reservation? LastReservation { get; set; }
-        public virtual string? LastReservationId { get; set; }
+        public virtual CopyHistory CopyHistory { get; set; }
+        public virtual Rental? CurrentRental { get; set; }
+        public virtual string? CurrentRentalId { get; set; }
+        public virtual Reservation? CurrentReservation { get; set; }
+        public virtual string? CurrentReservationId { get; set; }
     }
 }

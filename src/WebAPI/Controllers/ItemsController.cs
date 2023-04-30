@@ -63,6 +63,18 @@ namespace WebAPI.Controllers
             return Ok(item);
         }
 
+        //[HttpGet(ApiRoutes.Items.GetItemById)]
+        //[AllowAnonymous]
+        //[SwaggerOperation(Summary = "returns the item with the specified ID")]
+        //[ProducesResponseType(typeof(ItemResponse), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //public async Task<IActionResult> GetCopies([FromQuery] string id)
+        //{
+        //    var item = await _service.GetByIdAsync(id);
+        //    return Ok(item);
+        //}
+
+
         [HttpPost(ApiRoutes.Items.AddItem)]
         [SwaggerOperation(Summary = "adds new item")]
         [ProducesResponseType(typeof(ItemResponse), StatusCodes.Status201Created)]
@@ -124,5 +136,7 @@ namespace WebAPI.Controllers
 
             return Ok();
         }
+
+
     }
 }

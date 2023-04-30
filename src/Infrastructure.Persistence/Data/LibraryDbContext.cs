@@ -12,14 +12,17 @@ namespace Infrastructure.Persistence.Data
         private readonly IConfiguration _configuration;
         private readonly IUserResolverService _userResolverService;
         public DbSet<Item> Items { get; set; }
-
         public DbSet<Copy> Copies { get; set; }
         public DbSet<Library> Libraries { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<Rental> Rentals { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<CopyHistory> CopyHistories { get; set; }
+        public DbSet<ProfileHistory> ProfilesHistories { get; set; }
+        public DbSet<ArchivalRental> ArchivalRentals { get; set; }
+        public DbSet<ArchivalReservation> ArchivalReservations { get; set; }
 
-        public LibraryDbContext(DbContextOptions<LibraryDbContext> dbContextOptions) : base(dbContextOptions)
+        public LibraryDbContext()
         {
 
         }
@@ -32,7 +35,8 @@ namespace Infrastructure.Persistence.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"));
+               optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"));
+               // optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
             }
         }
         protected override void OnModelCreating(ModelBuilder builder)
@@ -55,13 +59,13 @@ namespace Infrastructure.Persistence.Data
 
                 entityBuilder.Property(entity => entity.InventoryNumber).ValueGeneratedOnAdd();
 
-                entityBuilder.HasOne(copy => copy.LastRental)
+                entityBuilder.HasOne(copy => copy.CurrentRental)
                 .WithOne(rental => rental.Copy)
-                .HasForeignKey<Copy>(copy => copy.LastRentalId);
+                .HasForeignKey<Copy>(copy => copy.CurrentRentalId);
 
-                entityBuilder.HasOne(copy => copy.LastReservation)
+                entityBuilder.HasOne(copy => copy.CurrentReservation)
                .WithOne(reservation => reservation.Copy)
-               .HasForeignKey<Copy>(copy => copy.LastReservationId);
+               .HasForeignKey<Copy>(copy => copy.CurrentReservationId);
             });
 
             builder.Entity<Profile>(entityBuilder =>
@@ -81,7 +85,22 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
             });
 
-            builder.Entity<History>(entityBuilder =>
+            builder.Entity<CopyHistory>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<ProfileHistory>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<ArchivalRental>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<ArchivalReservation>(entityBuilder =>
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
             });
@@ -103,21 +122,21 @@ namespace Infrastructure.Persistence.Data
 
             var userName = _userResolverService.GetUserName;
 
-            DateTime UtcNow;
+            DateTime now;
 
             foreach (var entityEntry in entries)
             {
-                UtcNow = DateTime.UtcNow;
+                now = DateTime.Now;
 
                 var auditable = (IAuditableEntity)entityEntry.Entity;
 
                 auditable.LastModifiedBy = userName;
-                auditable.LastModified = UtcNow;
+                auditable.LastModified = now;
 
                 if (entityEntry.State == EntityState.Added)
                 {
                     auditable.CreatedBy = userName;
-                    auditable.Created = UtcNow;
+                    auditable.Created = now;
                 }
             }
 

@@ -1,7 +1,9 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
+using Application.Dtos.Response.Archive;
 using Application.Interfaces;
 using Domain.Settings;
+using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +18,7 @@ namespace WebAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class ProfilesController : ControllerBase
     {
         private readonly IProfileService _service;
@@ -31,7 +34,6 @@ namespace WebAPI.Controllers
         [SwaggerOperation(Summary = "Creates new profile for user")]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CreateProfileAsync([FromBody] ProfileRequest dto)
         {
             var createdProfile = await _service.CreateProfileAsync(dto);
@@ -41,10 +43,11 @@ namespace WebAPI.Controllers
             return Created(uri, createdProfile);
         }
 
-        [HttpPost(Profiles.ActivationProfile)]
+        [HttpPatch(Profiles.ActivationProfile)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
         [SwaggerOperation(Summary = "Activates profile")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> ActivationProfileAsync([FromBody] string cardNumber)
         {
@@ -53,10 +56,46 @@ namespace WebAPI.Controllers
             return Ok();
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber)]
-        [SwaggerOperation(Summary = "Returns profile")]
+        [HttpPatch(Profiles.DeactivationProfile)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
+        [SwaggerOperation(Summary = "Deactivates profile")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> DeactivationProfileAsync([FromBody] string cardNumber)
+        {
+            await _service.DeactivationProfileAsync(cardNumber);
+
+            return Ok();
+        }
+
+        [HttpGet(Profiles.GetProfile)]
+        [SwaggerOperation(Summary = "Returns own profile")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetProfileAsync()
+        {
+            var response = await _service.GetProfileAsync();
+
+            return Ok(response);
+        }
+
+        [HttpGet(Profiles.GetProfileWithHistory)]
+        [SwaggerOperation(Summary = "Returns own profile with history")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetProfileWithHistoryAsync()
+        {
+            var response = await _service.GetProfileWithHistoryAsync();
+
+            return Ok(response);
+        }
+
+        [HttpGet(Profiles.GetProfileByCardNumber)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
+        [SwaggerOperation(Summary = "Returns profile by card number")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetProfileByCardNumberAsync([FromQuery(Name = "card-number")] string cardNumber)
         {
@@ -65,10 +104,11 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber+"his")]
+        [HttpGet(Profiles.GetProfileWithHistoryByCardNumber)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
         [SwaggerOperation(Summary = "Returns profile with history")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetProfileWithHistoryByCardNumberAsync([FromQuery(Name = "card-number")] string cardNumber)
         {
@@ -77,50 +117,41 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber+"un")]
-        [SwaggerOperation(Summary = "Returns unreturned history rentals")]
+        [HttpGet(Profiles.GetProfileHistoryByCardNumber)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
+        [SwaggerOperation(Summary = "Returns profile with history")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ProfileHistoryResponse), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetProfileHistoryByCardNumberAsync([FromQuery(Name = "card-number")] string cardNumber)
+        {
+            var response = await _service.GetProfileHistoryByCardNumberAsync(cardNumber);
+
+            return Ok(response);
+        }
+
+        [HttpGet(Profiles.GetCurrentRentals)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
+        [SwaggerOperation(Summary = "Returns current rentals")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(IEnumerable<RentalResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetUnreturnedRentalsAsync([FromQuery(Name = "card-number")] string cardNumber)
+        public async Task<IActionResult> GetCurrentRentalsAsync([FromQuery(Name = "card-number")] string cardNumber)
         {
-            var response = await _service.GetUnreturnedRentalsAsync(cardNumber);
+            var response = await _service.GetCurrentRentalsAsync(cardNumber);
 
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileByCardNumber+"rec")]
-        [SwaggerOperation(Summary = "Returns unreceived history reservations")]
+        [HttpGet(Profiles.GetCurrentReservations)]
+        [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
+        [SwaggerOperation(Summary = "Returns current reservations")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetUnreceivedReservationsAsync([FromQuery(Name = "card-number")] string cardNumber)
+        public async Task<IActionResult> GetCurrentReservationsAsync([FromQuery(Name = "card-number")] string cardNumber)
         {
-            var response = await _service.GetUnreceivedReservationsAsync(cardNumber);
-
-            return Ok(response);
-        }
-
-        [HttpGet(Profiles.GetRentalHistory)]
-        [SwaggerOperation(Summary = "Returns rental history")]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(IEnumerable<RentalResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetRentalHistoryAsync([FromQuery(Name = "card-number")] string cardNumber)
-        {
-            var response = await _service.GetRentalHistoryAsync(cardNumber);
-
-            return Ok(response);
-        }
-
-        [HttpGet(Profiles.GetReservationHistory)]
-        [SwaggerOperation(Summary = "Returns rental history")]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetReservationHistoryAsync([FromQuery(Name = "card-number")] string cardNumber)
-        {
-            var response = await _service.GetReservationHistoryAsync(cardNumber);
+            var response = await _service.GetCurrentReservationsAsync(cardNumber);
 
             return Ok(response);
         }

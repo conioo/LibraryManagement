@@ -1,5 +1,6 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
+using Application.Dtos.Response.Archive;
 using Domain.Entities;
 using Profile = Domain.Entities.Profile;
 
@@ -22,13 +23,17 @@ namespace Application.Mappings
             CreateMap<Reservation, ReservationResponse>()
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy.Item.Title));
 
+            CreateMap<Profile, ProfileResponse>()
+                .ForMember(dest => dest.ProfileHistory, conf => conf.ExplicitExpansion());
 
+            CreateMap<ArchivalRental, ArchivalRentalResponse>()
+               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 
-            // pod mapowanie
-            CreateMap<Profile, ProfileResponse>();
-                //.ForMember(dest => dest.HistoryRentals, conf => conf.MapFrom(src => src.HistoryRentals));
+            CreateMap<ArchivalReservation, ArchivalReservationResponse>()
+               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 
-           
+            CreateMap<ProfileHistory, ProfileHistoryResponse>();
         }
+
     }
 }

@@ -67,9 +67,9 @@ namespace Application.Reactive.Observers
 
                 foreach (var copy in copies)
                 {
-                    Copy copyModel = unitOfWork.Set<Copy>().AsNoTracking().Include(model => model.LastReservation).Single(model => model.InventoryNumber == copy.InventoryNumber);
+                    Copy copyModel = unitOfWork.Set<Copy>().AsNoTracking().Include(model => model.CurrentReservation).Single(model => model.InventoryNumber == copy.InventoryNumber);
 
-                    var reservation = copyModel.LastReservation;
+                    var reservation = copyModel.CurrentReservation;
 
                     if (reservation is null)
                     {
@@ -77,12 +77,12 @@ namespace Application.Reactive.Observers
                         break;
                     }
 
-                    if (reservation.Received is false)
-                    {
-                        ++numberFailedReservation;
+                    //if (reservation.Received is false)
 
-                        copy.IsAvailable = true;
-                    }
+                    ++numberFailedReservation;
+
+                    copy.IsAvailable = true;
+
                 }
 
                 unitOfWork.Set<Copy>().UpdateRange(copies);

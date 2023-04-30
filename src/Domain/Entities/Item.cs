@@ -12,6 +12,6 @@ namespace Domain.Entities
         public string? Publisher { get; set; }
         public int? YearOfPublication { get; set; }
         public string? ISBN { get; set; }
-        public ICollection<Copy> Copies { get; set; }
+        public virtual ICollection<Copy> Copies { get; set; }
     }
 }

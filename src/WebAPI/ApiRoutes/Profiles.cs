@@ -8,10 +8,14 @@ namespace WebAPI.ApiRoutes
 
         public const string CreateProfile = "create";
         public const string ActivationProfile = "activation";
+        public const string DeactivationProfile = "deactivation";
 
-        public const string GetProfileByCardNumber = "";
-
-        public const string GetRentalHistory = "rental-history";
-        public const string GetReservationHistory = "reservation-history";
+        public const string GetProfileWithHistoryByCardNumber = "with-history";
+        public const string GetProfile = "";
+        public const string GetProfileWithHistory = "history";
+        public const string GetProfileByCardNumber = "by-card/";
+        public const string GetProfileHistoryByCardNumber = "by-card/history";
+        public const string GetCurrentRentals = "by-card/current-rentals";
+        public const string GetCurrentReservations = "by-card/current-reservations";
     }
 }

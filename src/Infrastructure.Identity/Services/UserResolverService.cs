@@ -46,5 +46,23 @@ namespace Infrastructure.Identity.Services
                 return _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             }
         }
+
+        public string? GetProfileCardNumber
+        {
+            get
+            {
+                if (_httpContextAccessor.HttpContext is null)
+                {
+                    return null;
+                }
+
+                if (_httpContextAccessor.HttpContext.User.Identity is null)
+                {
+                    return null;
+                }
+
+                return _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "ProfileCardNumber")?.Value;
+            }
+        }
     }
 }

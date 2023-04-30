@@ -27,11 +27,9 @@ namespace WebAPI.Reactive
             });
 
             var endOfReservation = serviceProvider.GetRequiredService<IEndOfReservation>();
-            var startingCountingOfPenaltyCharges = serviceProvider.GetRequiredService<IStartingCountingOfPenaltyCharges>();
             var countingOfPenaltyCharges = serviceProvider.GetRequiredService<ICountingOfPenaltyCharges>();
 
             daily.Subscribe(endOfReservation);
-            daily.Subscribe(startingCountingOfPenaltyCharges);
             daily.Subscribe(countingOfPenaltyCharges);
         }
     }

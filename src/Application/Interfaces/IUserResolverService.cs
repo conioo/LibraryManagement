@@ -4,5 +4,6 @@
     {
         public string? GetUserName { get; }
         public string? GetUserId { get; }
+        public string? GetProfileCardNumber { get; }
     }
 }
