@@ -1,6 +1,5 @@
 ﻿using CommonContext.SharedContextBuilders;
 using WebAPI.ApiRoutes;
-using WebAPITests.Integration;
 
 namespace WebAPITests.Integration.SharedContextBuilders
 {
@@ -11,7 +10,9 @@ namespace WebAPITests.Integration.SharedContextBuilders
             Value = new SharedContext(options =>
             {
                 options.controllerPrefix = Items.Prefix;
-                options.addOldFakePolicyEvaluator = true;
+                options.addFakePolicyEvaluator = true;
+                //options.addOldFakePolicyEvaluator = true;
+                options.generateDefaultUser = true;
             });
         }
         public SharedContext Value { get; }

@@ -1,7 +1,5 @@
 ﻿#pragma warning disable CS8618 
 
-// zdjęcie
-
 namespace Application.Dtos.Request
 {
     public class ItemRequest

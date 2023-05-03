@@ -1,6 +1,7 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Dtos.Response.Archive;
+using Application.Mappings.AutoMapperHelpers;
 using Domain.Entities;
 using Profile = Domain.Entities.Profile;
 
@@ -33,6 +34,10 @@ namespace Application.Mappings
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 
             CreateMap<ProfileHistory, ProfileHistoryResponse>();
+
+            CreateMap<Copy, CopyResponse>();
+
+            CreateMap<Item, CopiesHelper>();
         }
 
     }

@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Sieve.Models;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Globalization;
 using WebAPI.ApiRoutes;
 
 namespace WebAPI.Controllers
@@ -19,6 +18,7 @@ namespace WebAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
     public class ItemsController : ControllerBase
     {
         private readonly IItemService _service;
@@ -30,7 +30,7 @@ namespace WebAPI.Controllers
             _options = options.Value;
         }
 
-        [HttpGet(ApiRoutes.Items.GetAllItems)]
+        [HttpGet(Items.GetAllItems)]
         [AllowAnonymous]
         [SwaggerOperation(Summary = "returns all items")]
         [ProducesResponseType(typeof(IEnumerable<ItemResponse>), StatusCodes.Status200OK)]
@@ -40,7 +40,7 @@ namespace WebAPI.Controllers
             return Ok(items);
         }
 
-        [HttpGet(ApiRoutes.Items.GetPage)]
+        [HttpGet(Items.GetPage)]
         [AllowAnonymous]
         [SwaggerOperation(Summary = "returns the items page")]
         [ProducesResponseType(typeof(PagedResponse<ItemResponse>), StatusCodes.Status200OK)]
@@ -52,7 +52,7 @@ namespace WebAPI.Controllers
             return Ok(pagedResponse);
         }
 
-        [HttpGet(ApiRoutes.Items.GetItemById)]
+        [HttpGet(Items.GetItemById)]
         [AllowAnonymous]
         [SwaggerOperation(Summary = "returns the item with the specified ID")]
         [ProducesResponseType(typeof(ItemResponse), StatusCodes.Status200OK)]
@@ -63,23 +63,35 @@ namespace WebAPI.Controllers
             return Ok(item);
         }
 
-        //[HttpGet(ApiRoutes.Items.GetItemById)]
-        //[AllowAnonymous]
-        //[SwaggerOperation(Summary = "returns the item with the specified ID")]
-        //[ProducesResponseType(typeof(ItemResponse), StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        //public async Task<IActionResult> GetCopies([FromQuery] string id)
-        //{
-        //    var item = await _service.GetByIdAsync(id);
-        //    return Ok(item);
-        //}
+        [HttpGet(Items.GetAllCopies)]
+        [AllowAnonymous]
+        [SwaggerOperation(Summary = "returns all copies")]
+        [ProducesResponseType(typeof(IEnumerable<CopyResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAllCopiesAsync([FromQuery] string id)
+        {
+            var response = await _service.GetAllCopiesAsync(id);
+            return Ok(response);
+        }
+
+        [HttpGet(Items.GetAvailableCopies)]
+        [AllowAnonymous]
+        [SwaggerOperation(Summary = "returns available copies")]
+        [ProducesResponseType(typeof(IEnumerable<CopyResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetAvailableCopiesAsync([FromQuery] string id)
+        {
+            var response = await _service.GetAvailableCopiesAsync(id);
+            return Ok(response);
+        }
 
 
-        [HttpPost(ApiRoutes.Items.AddItem)]
+        [HttpPost(Items.AddItem)]
         [SwaggerOperation(Summary = "adds new item")]
         [ProducesResponseType(typeof(ItemResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> AddItemAsync([FromBody] ItemRequest dto)
         {
             var createdItem = await _service.AddAsync(dto);
@@ -88,11 +100,12 @@ namespace WebAPI.Controllers
             return Created(uri, createdItem);
         }
 
-        [HttpPost(ApiRoutes.Items.AddItems)]
+        [HttpPost(Items.AddItems)]
         [SwaggerOperation(Summary = "adds new items")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> AddItemsAsync([FromBody] IEnumerable<ItemRequest> dtos)
         {
             await _service.AddRangeAsync(dtos);
@@ -100,12 +113,13 @@ namespace WebAPI.Controllers
             return Ok();
         }
 
-        [HttpPut(ApiRoutes.Items.UpdateItem)]
+        [HttpPut(Items.UpdateItem)]
         [SwaggerOperation(Summary = "updates excisting item")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> UpdateItemAsync([FromQuery] string id, [FromBody] ItemRequest dto)
         {
             await _service.UpdateAsync(id, dto);
@@ -113,11 +127,12 @@ namespace WebAPI.Controllers
             return Ok();
         }
 
-        [HttpDelete(ApiRoutes.Items.RemoveItem)]
+        [HttpDelete(Items.RemoveItem)]
         [SwaggerOperation(Summary = "deletes excisting item")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> RemoveItemAsync([FromQuery] string id)
         {
             await _service.RemoveAsync(id);
@@ -125,11 +140,12 @@ namespace WebAPI.Controllers
             return Ok();
         }
 
-        [HttpDelete(ApiRoutes.Items.RemoveItems)]
+        [HttpDelete(Items.RemoveItems)]
         [SwaggerOperation(Summary = "deletes excisting items")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> RemoveItemsAsync([FromBody] IEnumerable<string> ids)
         {
             await _service.RemoveRangeAsync(ids);

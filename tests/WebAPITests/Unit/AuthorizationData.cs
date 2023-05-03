@@ -13,6 +13,8 @@ namespace WebAPITests.Unit
                     new object[]{Items.Prefix, Items.GetAllItems, HttpMethod.Get},
                     new object[]{Items.Prefix, Items.GetItemById, HttpMethod.Get},
                     new object[]{Items.Prefix, Items.GetPage, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAllCopies, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAvailableCopies, HttpMethod.Get},
 
                     new object[]{Accounts.Prefix, Accounts.ConfirmEmail, HttpMethod.Get},
                     new object[]{Accounts.Prefix, Accounts.RefreshToken, HttpMethod.Get},
@@ -96,6 +98,8 @@ namespace WebAPITests.Unit
                     new object[]{Items.Prefix, Items.GetAllItems, HttpMethod.Get},
                     new object[]{Items.Prefix, Items.GetItemById, HttpMethod.Get},
                     new object[]{Items.Prefix, Items.GetPage, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAllCopies, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAvailableCopies, HttpMethod.Get},
 
                     new object[]{Accounts.Prefix, Accounts.ConfirmEmail, HttpMethod.Get},
                     new object[]{Accounts.Prefix, Accounts.RefreshToken, HttpMethod.Get},
@@ -184,6 +188,8 @@ namespace WebAPITests.Unit
                     new object[]{Items.Prefix, Items.RemoveItem, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.RemoveItems, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.UpdateItem, HttpMethod.Put},
+                    new object[]{Items.Prefix, Items.GetAllCopies, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAvailableCopies, HttpMethod.Get},
 
                     new object[]{Accounts.Prefix, Accounts.ConfirmEmail, HttpMethod.Get},
                     new object[]{Accounts.Prefix, Accounts.RefreshToken, HttpMethod.Get},
@@ -264,6 +270,8 @@ namespace WebAPITests.Unit
                     new object[]{Items.Prefix, Items.RemoveItem, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.RemoveItems, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.UpdateItem, HttpMethod.Put},
+                    new object[]{Items.Prefix, Items.GetAllCopies, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAvailableCopies, HttpMethod.Get},
 
                     new object[]{Accounts.Prefix, Accounts.ConfirmEmail, HttpMethod.Get},
                     new object[]{Accounts.Prefix, Accounts.RefreshToken, HttpMethod.Get},
@@ -343,6 +351,8 @@ namespace WebAPITests.Unit
                     new object[]{Items.Prefix, Items.RemoveItem, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.RemoveItems, HttpMethod.Delete},
                     new object[]{Items.Prefix, Items.UpdateItem, HttpMethod.Put},
+                    new object[]{Items.Prefix, Items.GetAllCopies, HttpMethod.Get},
+                    new object[]{Items.Prefix, Items.GetAvailableCopies, HttpMethod.Get},
 
                     new object[]{Accounts.Prefix, Accounts.ConfirmEmail, HttpMethod.Get},
                     new object[]{Accounts.Prefix, Accounts.RefreshToken, HttpMethod.Get},

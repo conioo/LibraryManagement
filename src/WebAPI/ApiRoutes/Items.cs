@@ -7,6 +7,8 @@
         public const string GetAllItems = "all";
         public const string GetPage = "page";
         public const string GetItemById = "";
+        public const string GetAllCopies = "copies";
+        public const string GetAvailableCopies = "availabla-copies";
         public const string AddItem = "add";
         public const string AddItems = "add-range";
         public const string UpdateItem = "update";
