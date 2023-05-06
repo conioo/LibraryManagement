@@ -16,6 +16,8 @@ namespace WebAPI.Controllers
     [Route("[controller]")]
     [ApiController]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _service;

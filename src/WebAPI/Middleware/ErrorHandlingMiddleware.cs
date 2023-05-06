@@ -54,6 +54,12 @@ namespace WebAPI.Middleware
 
                 await context.Response.WriteAsync(exception.Message);
             }
+            catch(NoContentException exception)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NoContent;
+
+                await context.Response.WriteAsync(exception.Message);
+            }
             catch (ApiException exception)
             {
                 context.Response.StatusCode = 500;

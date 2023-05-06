@@ -496,7 +496,7 @@ namespace WebAPITests.Integration
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(_client.BaseAddress + Profiles.GetProfileHistoryByCardNumber + $"?card-number={_profile.LibraryCardNumber}"),
+                RequestUri = new Uri(_client.BaseAddress + Profiles.GetHistoryByCardNumber + $"?card-number={_profile.LibraryCardNumber}"),
             };
 
             var response = await _client.SendAsync(request);
@@ -522,7 +522,7 @@ namespace WebAPITests.Integration
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri(_client.BaseAddress + Profiles.GetProfileHistoryByCardNumber + $"?card-number=null_null"),
+                RequestUri = new Uri(_client.BaseAddress + Profiles.GetHistoryByCardNumber + $"?card-number=null_null"),
             };
 
             var response = await _client.SendAsync(request);

@@ -15,6 +15,8 @@ namespace WebAPI.Controllers
     [Route("[controller]")]
     [ApiController]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _service;
@@ -50,6 +52,7 @@ namespace WebAPI.Controllers
         [HttpGet(Users.GetUser)]
         [SwaggerOperation(Summary = "returns the user")]
         [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetUserAsync()
         {
             var user = await _service.GetUserAsync(User);

@@ -67,6 +67,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(LibraryResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> AddLibraryAsync([FromBody] LibraryRequest dto)
         {
             var createdLibrary = await _service.AddAsync(dto);
@@ -81,6 +82,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> UpdateLibraryAsync([FromQuery] string id, [FromBody] LibraryRequest dto)
         {
             await _service.UpdateAsync(id, dto);
@@ -93,6 +95,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> RemoveLibraryAsync([FromQuery] string id)
         {
             await _service.RemoveAsync(id);

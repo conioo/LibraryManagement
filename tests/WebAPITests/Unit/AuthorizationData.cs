@@ -72,6 +72,11 @@ namespace WebAPITests.Unit
                     new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
                     new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
                     new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.GetCopyById, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetHistoryByInventoryNumber, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentRental, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentReservation, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.IsAvailable, HttpMethod.Get },
 
                     new object[]{Profiles.Prefix, Profiles.CreateProfile, HttpMethod.Post },
                     new object[]{Profiles.Prefix, Profiles.ActivationProfile, HttpMethod.Patch },
@@ -80,7 +85,7 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistory, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistoryByCardNumber, HttpMethod.Get },
-                    new object[]{Profiles.Prefix, Profiles.GetProfileHistoryByCardNumber, HttpMethod.Get },
+                    new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
                 };
@@ -109,6 +114,9 @@ namespace WebAPITests.Unit
                     new object[]{Accounts.Prefix, Accounts.Register, HttpMethod.Post},
                     new object[]{Accounts.Prefix, Accounts.ResetPassword, HttpMethod.Post},
                     //new object[]{Accounts.Prefix, Accounts.Logout, HttpMethod.Head},
+
+                    new object[]{Copies.Prefix, Copies.GetCopyById, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.IsAvailable, HttpMethod.Get },
 
                     new object[]{Users.Prefix, Users.GetUser, HttpMethod.Get},
 
@@ -162,12 +170,15 @@ namespace WebAPITests.Unit
                     new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
                     new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
                     new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.GetHistoryByInventoryNumber, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentRental, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentReservation, HttpMethod.Get },
 
                     new object[]{Profiles.Prefix, Profiles.ActivationProfile, HttpMethod.Patch },
                     new object[]{Profiles.Prefix, Profiles.DeactivationProfile, HttpMethod.Patch },
                     new object[]{Profiles.Prefix, Profiles.GetProfileByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistoryByCardNumber, HttpMethod.Get },
-                    new object[]{Profiles.Prefix, Profiles.GetProfileHistoryByCardNumber, HttpMethod.Get },
+                    new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
                 };
@@ -209,6 +220,11 @@ namespace WebAPITests.Unit
                     new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
                     new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
                     new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.GetCopyById, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetHistoryByInventoryNumber, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentRental, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentReservation, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.IsAvailable, HttpMethod.Get },
 
                     new object[]{Profiles.Prefix, Profiles.CreateProfile, HttpMethod.Post },
                     new object[]{Profiles.Prefix, Profiles.ActivationProfile, HttpMethod.Patch },
@@ -217,7 +233,7 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistory, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistoryByCardNumber, HttpMethod.Get },
-                    new object[]{Profiles.Prefix, Profiles.GetProfileHistoryByCardNumber, HttpMethod.Get },
+                    new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
                 };
@@ -307,6 +323,11 @@ namespace WebAPITests.Unit
                     new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
                     new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
                     new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.GetCopyById, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetHistoryByInventoryNumber, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentRental, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentReservation, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.IsAvailable, HttpMethod.Get },
 
                     new object[]{Profiles.Prefix, Profiles.CreateProfile, HttpMethod.Post },
                     new object[]{Profiles.Prefix, Profiles.ActivationProfile, HttpMethod.Patch },
@@ -315,7 +336,7 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistory, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistoryByCardNumber, HttpMethod.Get },
-                    new object[]{Profiles.Prefix, Profiles.GetProfileHistoryByCardNumber, HttpMethod.Get },
+                    new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
                 };
@@ -393,6 +414,11 @@ namespace WebAPITests.Unit
                     new object[]{Copies.Prefix, Copies.AddCopies, HttpMethod.Post },
                     new object[]{Copies.Prefix, Copies.RemoveCopy, HttpMethod.Delete },
                     new object[]{Copies.Prefix, Copies.RemoveCopies, HttpMethod.Delete },
+                    new object[]{Copies.Prefix, Copies.GetCopyById, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetHistoryByInventoryNumber, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentRental, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.GetCurrentReservation, HttpMethod.Get },
+                    new object[]{Copies.Prefix, Copies.IsAvailable, HttpMethod.Get },
 
                     new object[]{Profiles.Prefix, Profiles.CreateProfile, HttpMethod.Post },
                     new object[]{Profiles.Prefix, Profiles.ActivationProfile, HttpMethod.Patch },
@@ -401,7 +427,7 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistory, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistoryByCardNumber, HttpMethod.Get },
-                    new object[]{Profiles.Prefix, Profiles.GetProfileHistoryByCardNumber, HttpMethod.Get },
+                    new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
                 };

@@ -117,13 +117,13 @@ namespace WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet(Profiles.GetProfileHistoryByCardNumber)]
+        [HttpGet(Profiles.GetHistoryByCardNumber)]
         [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
         [SwaggerOperation(Summary = "Returns profile with history")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProfileHistoryResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetProfileHistoryByCardNumberAsync([FromQuery(Name = "card-number")] string cardNumber)
+        public async Task<IActionResult> GetHistoryByCardNumberAsync([FromQuery(Name = "card-number")] string cardNumber)
         {
             var response = await _service.GetProfileHistoryByCardNumberAsync(cardNumber);
 

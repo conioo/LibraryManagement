@@ -34,6 +34,7 @@ namespace Application.Mappings
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 
             CreateMap<ProfileHistory, ProfileHistoryResponse>();
+            CreateMap<CopyHistory, CopyHistoryResponse>();
 
             CreateMap<Copy, CopyResponse>();
 

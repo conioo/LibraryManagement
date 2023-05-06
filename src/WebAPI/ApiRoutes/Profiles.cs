@@ -14,7 +14,7 @@ namespace WebAPI.ApiRoutes
         public const string GetProfile = "";
         public const string GetProfileWithHistory = "history";
         public const string GetProfileByCardNumber = "by-card/";
-        public const string GetProfileHistoryByCardNumber = "by-card/history";
+        public const string GetHistoryByCardNumber = "by-card/history";
         public const string GetCurrentRentals = "by-card/current-rentals";
         public const string GetCurrentReservations = "by-card/current-reservations";
     }

@@ -30,6 +30,7 @@ namespace CommonContext
             _domainTypes[typeof(RoleRequest)] = typeof(IdentityRole);
             _domainTypes[typeof(LibraryRequest)] = typeof(Library);
 
+            var copyHistoryGenerator = new Faker<CopyHistory>();
 
             var itemGenerator = new Faker<Item>()
                 .RuleFor(item => item.Title, faker => faker.Commerce.ProductName())
@@ -45,7 +46,7 @@ namespace CommonContext
                 .RuleFor(registerRequest => registerRequest.LastName, faker => faker.Person.LastName)
                 .RuleFor(registerRequest => registerRequest.UserName, faker => faker.Person.FullName.Replace(' ', '_'))
                 .RuleFor(registerRequest => registerRequest.Password, faker => faker.Internet.Password())
-                .RuleFor(registerRequest => registerRequest.ConfirmPassword, (faker, registerRequest) => registerRequest.Password)
+                .RuleFor(registerRequest => registerRequest.ConfirmPassword, (_, registerRequest) => registerRequest.Password)
                 .RuleFor(registerRequest => registerRequest.Email, faker => faker.Internet.Email());
 
             var applicationUserGenerator = new Faker<ApplicationUser>()
@@ -56,7 +57,7 @@ namespace CommonContext
 
             var identityRoleGenerator = new Faker<IdentityRole>()
                .RuleFor(role => role.Name, faker => "_" + faker.Name.JobType())
-               .RuleFor(role => role.NormalizedName, (faker, role) => role.Name.ToUpper());
+               .RuleFor(role => role.NormalizedName, (_, role) => role.Name.ToUpper());
 
             var libraryGenerator = new Faker<Library>()
                .RuleFor(Library => Library.Name, faker => faker.Company.CompanyName())
@@ -70,29 +71,31 @@ namespace CommonContext
                .RuleFor(Library => Library.IsPhotocopier, faker => faker.Random.Bool());
 
             var copyGenerator = new Faker<Copy>()
-                .RuleFor(copy => copy.Item, faker => itemGenerator.Generate())
-                .RuleFor(copy => copy.Library, faker => libraryGenerator.Generate());
-            // .RuleFor(copy => copy.InventoryNumber, faker => Guid.NewGuid().ToString());
+                .RuleFor(copy => copy.Item, _ => itemGenerator.Generate())
+                .RuleFor(copy => copy.Library, _ => libraryGenerator.Generate())
+                .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGenerator.Generate());
 
             var rentalGenerator = new Faker<Rental>()
                 .RuleFor(rental => rental.PenaltyCharge, faker => faker.Random.Decimal(0, 20))
                 .RuleFor(rental => rental.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now))
-                .RuleFor(rental => rental.EndDate, (faker, rental) => rental.BeginDate.AddDays(30));
+                .RuleFor(rental => rental.EndDate, (_, rental) => rental.BeginDate.AddDays(30));
+
+            var reservationGenerator = new Faker<Reservation>()
+              .RuleFor(reservation => reservation.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now))
+              .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7));
 
             var archivalRentalGenerator = new Faker<ArchivalRental>()
                .RuleFor(archivalRental => archivalRental.PenaltyCharge, faker => faker.Random.Decimal(0, 20))
                .RuleFor(archivalRental => archivalRental.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
-               .RuleFor(archivalRental => archivalRental.EndDate, (faker, rental) => rental.BeginDate.AddDays(30))
+               .RuleFor(archivalRental => archivalRental.EndDate, (_, rental) => rental.BeginDate.AddDays(30))
                .RuleFor(archivalRental => archivalRental.ReturnedDate, (faker, rental) => faker.Date.Between(rental.BeginDate.AddDays(1), rental.BeginDate.AddMonths(1)));
 
 
-            var reservationGenerator = new Faker<Reservation>()
-              .RuleFor(reservation => reservation.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now))
-              .RuleFor(reservation => reservation.EndDate, (faker, reservation) => reservation.BeginDate.AddDays(7));
+
 
             var archivalReservationGenerator = new Faker<ArchivalReservation>()
               .RuleFor(reservation => reservation.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
-              .RuleFor(reservation => reservation.EndDate, (faker, reservation) => reservation.BeginDate.AddDays(7))
+              .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7))
               .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.Between(reservation.BeginDate.AddDays(1), reservation.EndDate));
 
 
@@ -124,6 +127,16 @@ namespace CommonContext
                    return new List<Reservation> { reservation };
                });
 
+            copyHistoryGenerator = new Faker<CopyHistory>()
+            .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
+            {
+                var archival = archivalRentalGenerator.Generate(1).First();
+                return new List<ArchivalRental> { archival };
+            }).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
+            {
+                var archival = archivalReservationGenerator.Generate(1).First();
+                return new List<ArchivalReservation> { archival };
+            });
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
@@ -137,6 +150,7 @@ namespace CommonContext
             profileHistoryGenerator.UseSeed(19353);
             archivalRentalGenerator.UseSeed(4715);
             archivalReservationGenerator.UseSeed(01743);
+            copyHistoryGenerator.UseSeed(2752);
 
             _generators[typeof(Item)] = itemGenerator;
             _generators[typeof(RegisterRequest)] = registerRequestGenerator;
@@ -150,6 +164,7 @@ namespace CommonContext
             _generators[typeof(ArchivalReservation)] = archivalReservationGenerator;
             _generators[typeof(ProfileHistory)] = profileHistoryGenerator;
             _generators[typeof(Profile)] = profileGenerator;
+            _generators[typeof(CopyHistory)] = copyHistoryGenerator;
         }
 
         public static IEnumerable<T> Get<T>(int number)

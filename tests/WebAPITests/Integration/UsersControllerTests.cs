@@ -46,6 +46,8 @@ namespace WebAPITests.Integration
         {
             _sharedContext.IdentityDbContext.Database.EnsureDeleted();
             _sharedContext.IdentityDbContext.Database.EnsureCreated();
+
+            _sharedContext.RefreshScope();
         }
 
         [Fact]

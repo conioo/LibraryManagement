@@ -19,6 +19,8 @@ namespace WebAPI.Controllers
     [ApiController]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class RolesController : ControllerBase
     {
         private IRoleService _service;
