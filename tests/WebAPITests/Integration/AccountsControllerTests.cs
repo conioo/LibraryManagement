@@ -42,8 +42,7 @@ namespace WebAPITests.Integration
 
             _sharedContext.RefreshScope();
 
-            var emailService = _sharedContext.GetMock<IEmailService>();
-            emailService.Reset();
+            _sharedContext.RefreshMock<IEmailService>();
         }
 
         private async Task<ApplicationUser> GetConfirmUser()

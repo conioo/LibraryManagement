@@ -11,7 +11,6 @@ namespace Domain.Entities
         public bool IsActive { get; set; } = false;
 
         public virtual ProfileHistory ProfileHistory { get; set; }
-
         public virtual ICollection<Rental>? CurrrentRentals { get; set; }
         public virtual ICollection<Reservation>? CurrrentReservations { get; set; }
     }

@@ -4,8 +4,9 @@ namespace Application.Dtos.Response
 {
     public class RentalResponse
     {
-        public DateTime BeginTime { get; set; }
-        public DateTime EndTime { get; set; }
+        public string Id { get; set; } 
+        public DateOnly BeginTime { get; set; }
+        public DateOnly EndTime { get; set; }
         public bool Returned { get; set; }
 
         public string? ItemTitle { get; set; }

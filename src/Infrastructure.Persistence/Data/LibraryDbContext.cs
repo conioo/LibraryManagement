@@ -36,7 +36,8 @@ namespace Infrastructure.Persistence.Data
             if (!optionsBuilder.IsConfigured)
             {
                optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"));
-               // optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
+                //if development
+               //optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
             }
         }
         protected override void OnModelCreating(ModelBuilder builder)
@@ -78,6 +79,10 @@ namespace Infrastructure.Persistence.Data
             builder.Entity<Rental>(entityBuilder =>
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+
+                //entityBuilder.HasOne(rental => rental.Copy)
+                //.WithOne(copy => copy.CurrentRental)
+                //.HasForeignKey<Rental>(rental => rental.CopyInventoryNumber);
             });
 
             builder.Entity<Reservation>(entityBuilder =>
@@ -142,5 +147,39 @@ namespace Infrastructure.Persistence.Data
 
             return base.SaveChangesAsync(cancellationToken);
         }
+
+        public override int SaveChanges()
+        {
+            var entries = ChangeTracker.Entries().Where(e => e.Entity is IAuditableEntity && (e.State == EntityState.Modified || e.State == EntityState.Added));
+
+            if (!entries.Any())
+            {
+                return base.SaveChanges();
+            }
+
+            var userName = _userResolverService.GetUserName;
+
+            DateTime now;
+
+            foreach (var entityEntry in entries)
+            {
+                now = DateTime.Now;
+
+                var auditable = (IAuditableEntity)entityEntry.Entity;
+
+                auditable.LastModifiedBy = userName;
+                auditable.LastModified = now;
+
+                if (entityEntry.State == EntityState.Added)
+                {
+                    auditable.CreatedBy = userName;
+                    auditable.Created = now;
+                }
+            }
+
+            return base.SaveChanges();
+        }
+
+
     }
 }

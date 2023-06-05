@@ -20,6 +20,8 @@ namespace Application.Services
 
         public override async Task<CopyResponse> AddAsync(CopyRequest dto)
         {
+            //copy history stworzyć
+            
             var item = await _unitOfWork.Set<Item>().FindAsync(dto.ItemId);
 
             if (item is null)

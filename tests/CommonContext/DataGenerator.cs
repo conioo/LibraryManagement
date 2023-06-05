@@ -76,27 +76,24 @@ namespace CommonContext
                 .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGenerator.Generate());
 
             var rentalGenerator = new Faker<Rental>()
-                .RuleFor(rental => rental.PenaltyCharge, faker => faker.Random.Decimal(0, 20))
-                .RuleFor(rental => rental.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now))
+                .RuleFor(rental => rental.PenaltyCharge, _ => 0)
+                .RuleFor(rental => rental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now)))
                 .RuleFor(rental => rental.EndDate, (_, rental) => rental.BeginDate.AddDays(30));
 
             var reservationGenerator = new Faker<Reservation>()
-              .RuleFor(reservation => reservation.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now))
+              .RuleFor(reservation => reservation.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now)))
               .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7));
 
             var archivalRentalGenerator = new Faker<ArchivalRental>()
                .RuleFor(archivalRental => archivalRental.PenaltyCharge, faker => faker.Random.Decimal(0, 20))
-               .RuleFor(archivalRental => archivalRental.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
+               .RuleFor(archivalRental => archivalRental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
                .RuleFor(archivalRental => archivalRental.EndDate, (_, rental) => rental.BeginDate.AddDays(30))
-               .RuleFor(archivalRental => archivalRental.ReturnedDate, (faker, rental) => faker.Date.Between(rental.BeginDate.AddDays(1), rental.BeginDate.AddMonths(1)));
-
-
-
+               .RuleFor(archivalRental => archivalRental.ReturnedDate, (faker, rental) => faker.Date.BetweenDateOnly(rental.BeginDate.AddDays(1), rental.BeginDate.AddMonths(1)));
 
             var archivalReservationGenerator = new Faker<ArchivalReservation>()
-              .RuleFor(reservation => reservation.BeginDate, faker => faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1)))
+              .RuleFor(reservation => reservation.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
               .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7))
-              .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.Between(reservation.BeginDate.AddDays(1), reservation.EndDate));
+              .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.BetweenDateOnly(reservation.BeginDate.AddDays(1), reservation.EndDate));
 
 
             var profileHistoryGenerator = new Faker<ProfileHistory>()
@@ -127,16 +124,18 @@ namespace CommonContext
                    return new List<Reservation> { reservation };
                });
 
-            copyHistoryGenerator = new Faker<CopyHistory>()
-            .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
-            {
-                var archival = archivalRentalGenerator.Generate(1).First();
-                return new List<ArchivalRental> { archival };
-            }).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
-            {
-                var archival = archivalReservationGenerator.Generate(1).First();
-                return new List<ArchivalReservation> { archival };
-            });
+            copyHistoryGenerator = new Faker<CopyHistory>();
+            //.RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
+            //{
+            //    //var archival = archivalRentalGenerator.Generate(1).First();
+            //    //return new List<ArchivalRental> { archival };
+            //    return new List<ArchivalRental>();
+            //}).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
+            //{
+            //    //var archival = archivalReservationGenerator.Generate(1).First();
+            //    //return new List<ArchivalReservation> { archival };
+            //    return new List<ArchivalReservation>();
+            //});
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);

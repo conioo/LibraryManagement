@@ -41,7 +41,7 @@ namespace Application.Reactive.Observers
 
         public void AddRental(Rental rental)
         {
-            var endOfRentalDate = DateOnly.FromDateTime(rental.EndDate);
+            var endOfRentalDate = rental.EndDate;
 
             if (_rentalIds.ContainsKey(endOfRentalDate))
             {
@@ -75,7 +75,7 @@ namespace Application.Reactive.Observers
             var rentalIds = _rentalIds[date];
             Rental? rental;
             int numberAdded = 0;
-
+            //httpcontextaccesor
             using (var scope = _serviceProvider.CreateScope())
             {
                 var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
@@ -108,12 +108,22 @@ namespace Application.Reactive.Observers
 
                 foreach (var overdueRental in _overdueRentals)
                 {
-                    overdueRental.PenaltyCharge += _rentalOptions.PenaltyChargePerDay;
+                    //overdueRental.PenaltyCharge += _rentalOptions.PenaltyChargePerDay;
                 }
 
                 unitOfWork.Set<Rental>().UpdateRange(_overdueRentals);
                 unitOfWork.SaveChangesAsync().Wait();
             }
+        }
+
+        public bool RenewalRental(string rentalId, DateOnly endDate)
+        {
+            return _rentalIds[endDate].Remove(rentalId);
+        }
+
+        public void ReturnOfItem(Rental rental)
+        {
+            throw new NotImplementedException();
         }
     }
 }

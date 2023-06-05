@@ -30,6 +30,8 @@ namespace Application.Mappings
             CreateMap<ArchivalRental, ArchivalRentalResponse>()
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 
+            CreateMap<Rental, ArchivalRental>();
+
             CreateMap<ArchivalReservation, ArchivalReservationResponse>()
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
 

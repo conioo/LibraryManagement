@@ -61,7 +61,14 @@ namespace Infrastructure.Identity.Services
                     return null;
                 }
 
-                return _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "ProfileCardNumber")?.Value;
+                var value = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "ProfileCardNumber")?.Value;
+
+                if(value == string.Empty)
+                {
+                    return null;
+                }
+
+                return value;
             }
         }
     }

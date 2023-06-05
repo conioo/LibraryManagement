@@ -1,4 +1,5 @@
 ﻿using Domain.Settings;
+using Microsoft.Extensions.Options;
 using Sieve.Models;
 using WebAPI.Installers.Interfaces;
 

@@ -1,6 +1,7 @@
 ﻿using Application.Dtos.Identity.Request;
 using Application.Dtos.Identity.Response;
 using Application.Interfaces;
+using Application.Reactive.Interfaces;
 using CommonContext;
 using Domain.Interfaces;
 using Domain.Settings;
@@ -20,25 +21,25 @@ using Moq;
 using System.Net.Http.Json;
 using WebAPI;
 using WebAPI.ApiRoutes;
+using Profile = Domain.Entities.Profile;
 
 namespace WebAPITests.Integration
 {
     public class SharedContext : WebApplicationFactory<Program>
     {
-        public ApplicationSettings ApplicationSettings { get; set; }
-        public IUnitOfWork DbContext { get; set; }
-        public IdentityContext IdentityDbContext { get; set; }
+        public ApplicationSettings ApplicationSettings { get; private set; }
+        public IUnitOfWork DbContext { get; private set; }
+        public IdentityContext IdentityDbContext { get; private set; }
+        public UserManager<ApplicationUser> UserManager { get; private set; }
+        public JwtSettings JwtSettings { get; private set; }
+        public IJwtService JwtService { get; private set; }
+        public ApplicationUser? DefaultUser { get; private set; }
+        public Profile? DefaultProfile { get; private set; }
 
-        public UserManager<ApplicationUser> UserManager { get; set; }
-        public JwtSettings JwtSettings { get; set; }
-        public IJwtService JwtService { get; set; }
-
-        public ApplicationUser? DefaultUser { get; set; }
+        public IConfiguration Configuration;
 
         private Dictionary<Type, object> Mocks { get; set; } = new Dictionary<Type, object>();
-
         private IServiceScopeFactory _scopeFactory;
-        public IConfiguration Configuration;
         private SharedContextOptions _options;
 
         private static SharedContextOptions InvocationHelper(Action<SharedContextOptions> optionsBuilder)
@@ -87,9 +88,14 @@ namespace WebAPITests.Integration
                 ClientOptions.BaseAddress = new Uri($"{ApplicationSettings.BaseAddress}/{ApplicationSettings.RoutePrefix}/{_options.controllerPrefix}/");
             }
 
-            if (_options.generateDefaultUser is true)
+            if (_options.addDefaultUser is true)
             {
                 DefaultUser = GetDefaultUser();
+
+                if (_options.addProfileForDefaultUser)
+                {
+                    DefaultProfile = GetProfile(DefaultUser);
+                }
             }
         }
 
@@ -117,6 +123,42 @@ namespace WebAPITests.Integration
             // add another
         }
 
+        public void ResetState()
+        {
+            RefreshScope();
+
+            DbContext.Database.EnsureDeleted();
+            DbContext.Database.EnsureCreated();
+
+            IdentityDbContext.Database.EnsureDeleted();
+            IdentityDbContext.Database.EnsureCreated();
+
+            if (_options.addCountingOfPenaltyChargesMock)
+            {
+                RefreshMock<ICountingOfPenaltyCharges>();
+            }
+
+            if (_options.addDefaultUser)
+            {
+                DefaultUser = GetDefaultUser();
+
+                if (_options.addProfileForDefaultUser)
+                {
+                    DefaultProfile = GetProfile(DefaultUser);
+                }
+            }
+
+            IdentityDbContext.SaveChanges();
+        }
+
+
+
+        public void RefreshMock<T>() where T : class
+        {
+            var service = GetMock<T>();
+            service.Reset();
+        }
+
         public Mock<T> GetMock<T>() where T : class
         {
             return (Mock<T>)Mocks[typeof(T)];
@@ -128,7 +170,7 @@ namespace WebAPITests.Integration
 
             builder.ConfigureAppConfiguration((context, builder) =>
             {
-                builder.Sources.Clear();
+                //builder.Sources.Clear();
 
                 var projectDir = Directory.GetCurrentDirectory();
                 var configurationPath = Path.Combine(projectDir, "appsettings.test.json");
@@ -186,6 +228,32 @@ namespace WebAPITests.Integration
 
                     services.AddSingleton(emailMock.Object);
                 }
+
+                if (_options.addCountingOfPenaltyChargesMock)
+                {
+                    var countingOfPenaltyCharges = services.Single(service => service.ServiceType == typeof(ICountingOfPenaltyCharges));
+
+                    services.Remove(countingOfPenaltyCharges);
+
+                    var countingOfPenaltyChargesMock = new Mock<ICountingOfPenaltyCharges>();
+
+                    Mocks[typeof(ICountingOfPenaltyCharges)] = countingOfPenaltyChargesMock;
+
+                    services.AddSingleton(countingOfPenaltyChargesMock.Object);
+                }
+
+                if (_options.addEndOfReservationMock)
+                {
+                    var endOfReservation = services.Single(service => service.ServiceType == typeof(IEndOfReservation));
+
+                    services.Remove(endOfReservation);
+
+                    var endOfReservationMock = new Mock<IEndOfReservation>();
+
+                    Mocks[typeof(IEndOfReservation)] = endOfReservationMock;
+
+                    services.AddSingleton(endOfReservationMock.Object);
+                }
             });
         }
 
@@ -210,7 +278,7 @@ namespace WebAPITests.Integration
             return responseLogin;
         }
 
-        public ApplicationUser GetDefaultUser()
+        private ApplicationUser GetDefaultUser()
         {
             var defaultUser = DataGenerator.Get<ApplicationUser>(1).First();
             defaultUser.UserName = "default";
@@ -219,7 +287,29 @@ namespace WebAPITests.Integration
 
             return defaultUser;
         }
+        private Profile GetProfile(ApplicationUser user)
+        {
+            var profile = DataGenerator.Get<Profile>(1).First();
 
+            if(_options.removeRentalsAndReservationsForTheProfile)
+            {
+                profile.CurrrentRentals = null;
+                profile.CurrrentReservations = null;
+            }
+
+            profile.IsActive = _options.isActiveProfile;
+            profile.UserId = user.Id;
+
+            DbContext.Set<Profile>().Add(profile);
+            DbContext.SaveChangesAsync().Wait();
+
+            user.ProfileCardNumber = profile.LibraryCardNumber;
+
+            IdentityDbContext.Users.Update(user);
+            IdentityDbContext.SaveChanges();
+
+            return profile;
+        }
         public async Task<ApplicationUser> GetBasicConfirmUser()
         {
             var user = DataGenerator.Get<ApplicationUser>(1).First();

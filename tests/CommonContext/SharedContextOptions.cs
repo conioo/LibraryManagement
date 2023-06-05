@@ -10,6 +10,16 @@
 
         public bool addEmailServiceMock = false;
 
-        public bool generateDefaultUser = false;
+        public bool addCountingOfPenaltyChargesMock = false;
+
+        public bool addEndOfReservationMock = false;
+
+        public bool addDefaultUser = false;
+
+        public bool addProfileForDefaultUser = false;
+
+        public bool removeRentalsAndReservationsForTheProfile = false;
+
+        public bool isActiveProfile = true;
     }
 }

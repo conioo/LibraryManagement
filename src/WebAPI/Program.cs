@@ -3,10 +3,26 @@ using Infrastructure.Identity;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Serilog;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using WebAPI.Conventions;
 using WebAPI.Extensions;
 using WebAPI.Installers.Extensions;
 using WebAPI.Middleware;
+
+public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
+{
+    public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return DateOnly.FromDateTime(reader.GetDateTime());
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options)
+    {
+        var isoDate = value.ToString("O");
+        writer.WriteStringValue(isoDate);
+    }
+}
 
 namespace WebAPI
 {
@@ -21,14 +37,16 @@ namespace WebAPI
             builder.Services.AddControllers(options =>
             {
                 options.Conventions.Add(new RoutePrefixConvention(builder.Configuration));
-            });
+            }).AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+            }); ;
 
             builder.Services.InstallServicesInAssembly(builder.Configuration);
+
             builder.Services.AddApplication();
             builder.Services.AddInfrastructurePersistence();
             builder.Services.AddInfrastructureIdentity(builder.Configuration);
-
-            //builder.Services.AddEndpointsApiExplorer();
 
             var app = builder.Build();
 

@@ -6,8 +6,8 @@ namespace Domain.Entities
 {
     public class Reservation : BaseEntity
     {
-        public DateTime BeginDate { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateOnly BeginDate { get; set; }
+        public DateOnly EndDate { get; set; }
         public virtual Profile Profile { get; set; }
         public virtual Copy Copy { get; set; }
     }

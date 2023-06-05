@@ -11,8 +11,8 @@ namespace WebAPI.Installers
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration)
         {
-            //services.AddFluentValidationAutoValidation();
-            services.AddFluentValidationAutoValidation(options => options.ImplicitlyValidateRootCollectionElements = true);
+            services.AddFluentValidationAutoValidation();
+            //services.AddFluentValidationAutoValidation(options => options.ImplicitlyValidateRootCollectionElements = true);
 
             services.AddValidatorsFromAssembly(Assembly.GetAssembly(typeof(RegisterRequestValidator)));
 

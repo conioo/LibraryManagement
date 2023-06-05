@@ -24,30 +24,13 @@ namespace WebAPITests.Integration
             _sharedContext = sharedContextBuilder.Value;
             _client = _sharedContext.CreateClient();
 
-            _defaultUser = _sharedContext.GetDefaultUser();
-
-            var profile = DataGenerator.Get<Profile>(1).First();
-            profile.UserId = _defaultUser.Id;
-
-            _sharedContext.DbContext.Set<Profile>().Add(profile);
-            _sharedContext.DbContext.SaveChangesAsync().Wait();
-
-            _defaultUser.ProfileCardNumber = profile.LibraryCardNumber;
-            _sharedContext.IdentityDbContext.Update(_defaultUser);
-            _sharedContext.IdentityDbContext.SaveChanges();
-
-            _profile = profile;
+            _defaultUser = _sharedContext.DefaultUser;
+            _profile = _sharedContext.DefaultProfile;
         }
 
         public void Dispose()
         {
-            _sharedContext.DbContext.Database.EnsureDeleted();
-            _sharedContext.DbContext.Database.EnsureCreated();
-
-            _sharedContext.IdentityDbContext.Database.EnsureDeleted();
-            _sharedContext.IdentityDbContext.Database.EnsureCreated();
-
-            _sharedContext.RefreshScope();
+            _sharedContext.ResetState();
         }
 
         [Fact]

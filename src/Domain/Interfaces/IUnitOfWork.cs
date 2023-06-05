@@ -8,6 +8,7 @@ namespace Domain.Interfaces
     {
         public DbSet<TEntity> Set<TEntity>() where TEntity : class;// where TEntity : BaseEntity;
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        public int SaveChanges();
         public DatabaseFacade Database { get; }
     }
 }

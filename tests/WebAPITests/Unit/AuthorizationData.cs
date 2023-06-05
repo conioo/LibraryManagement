@@ -88,6 +88,14 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
+
+                    new object[]{Rentals.Prefix, Rentals.GetRentalById, HttpMethod.Get },
+                    new object[]{Rentals.Prefix, Rentals.AddRental, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.AddRentals, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.RemoveRentalById, HttpMethod.Delete },
+                    new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                 };
 
 
@@ -181,6 +189,14 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
+
+                    new object[]{Rentals.Prefix, Rentals.GetRentalById, HttpMethod.Get },
+                    new object[]{Rentals.Prefix, Rentals.AddRental, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.AddRentals, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.RemoveRentalById, HttpMethod.Delete },
+                    new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                 };
             }
         }
@@ -236,6 +252,13 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
+
+                    new object[]{Rentals.Prefix, Rentals.GetRentalById, HttpMethod.Get },
+                    new object[]{Rentals.Prefix, Rentals.AddRental, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.AddRentals, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                 };
             }
         }
@@ -268,6 +291,8 @@ namespace WebAPITests.Unit
                     new object[]{Libraries.Prefix, Libraries.UpdateLibrary, HttpMethod.Put },
                     new object[]{Libraries.Prefix, Libraries.RemoveLibrary, HttpMethod.Delete },
                     new object[]{Libraries.Prefix, Libraries.AddLibrary, HttpMethod.Post },
+
+                    new object[]{Rentals.Prefix, Rentals.RemoveRentalById, HttpMethod.Delete },
                 };
             }
         }
@@ -339,6 +364,14 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
+
+                    new object[]{Rentals.Prefix, Rentals.GetRentalById, HttpMethod.Get },
+                    new object[]{Rentals.Prefix, Rentals.AddRental, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.AddRentals, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.RemoveRentalById, HttpMethod.Delete },
+                    new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                 };
             }
         }
@@ -430,6 +463,14 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.GetHistoryByCardNumber, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentRentals, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetCurrentReservations, HttpMethod.Get },
+
+                    new object[]{Rentals.Prefix, Rentals.GetRentalById, HttpMethod.Get },
+                    new object[]{Rentals.Prefix, Rentals.AddRental, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.AddRentals, HttpMethod.Post },
+                    new object[]{Rentals.Prefix, Rentals.RemoveRentalById, HttpMethod.Delete },
+                    new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                 };
             }
         }

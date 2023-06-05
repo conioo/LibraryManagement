@@ -27,6 +27,8 @@ namespace Application
             services.AddScoped<ICopyService, CopyService>();
             services.AddScoped<IProfileService, ProfileService>();
 
+            services.AddScoped<IRentalService, RentalService>();
+
             services.AddSingleton<IEmailService, EmailService>();
 
 

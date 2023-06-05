@@ -3,17 +3,18 @@ using WebAPI.ApiRoutes;
 
 namespace WebAPITests.Integration.SharedContextBuilders
 {
-    public class ProfilesContextBuilder : ISharedContextBuilder
+    public class RentalContextBuilder : ISharedContextBuilder
     {
-        public ProfilesContextBuilder()
+        public RentalContextBuilder()
         {
             Value = new SharedContext(options =>
             {
-                options.controllerPrefix = Profiles.Prefix;
-                options.addFakePolicyEvaluator = true;
+                options.controllerPrefix = Rentals.Prefix;
                 options.addDefaultUser = true;
                 options.addProfileForDefaultUser = true;
-                options.isActiveProfile = false;
+                options.removeRentalsAndReservationsForTheProfile = true;
+                options.addFakePolicyEvaluator = true;
+                options.addCountingOfPenaltyChargesMock = true;
             });
         }
         public SharedContext Value { get; }

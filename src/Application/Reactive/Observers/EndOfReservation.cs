@@ -17,10 +17,10 @@ namespace Application.Reactive.Observers
 
         private IDictionary<DateOnly, List<Copy>> _copies = new Dictionary<DateOnly, List<Copy>>();
 
-        public EndOfReservation(IServiceProvider serviceProvider, IOptions<ReservationSettings> options, ILogger<EndOfReservation> logger)
+        public EndOfReservation(IServiceProvider serviceProvider,/* IOptions<ReservationSettings> options,*/ ILogger<EndOfReservation> logger, IOptions<RentalSettings> ren)
         {
             _serviceProvider = serviceProvider;
-            _reservationOptions = options.Value;
+            //_reservationOptions = options.Value;
             _logger = logger;
         }
 
