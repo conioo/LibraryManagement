@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Infrastructure.Identity
 {
-    public static class ServiceRegistrationExtensions
+    public static class ServiceRegistrationExtension
     {
         public static IServiceCollection AddInfrastructureIdentity(this IServiceCollection services, IConfiguration configuration)
         {

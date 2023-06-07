@@ -10,7 +10,7 @@ using Sieve.Services;
 
 namespace Application
 {
-    public static class ServiceRegistrationExtensions
+    public static class ServiceRegistrationExtension
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {

@@ -2,6 +2,7 @@
 using Application.Dtos.Response;
 using Application.Reactive.Interfaces;
 using CommonContext;
+using CommonContext.Extensions;
 using Domain.Entities;
 using FluentAssertions;
 using Infrastructure.Identity.Entities;
@@ -32,18 +33,23 @@ namespace WebAPITests.Integration
             _client = _sharedContext.CreateClient();
 
             _defaultUser = _sharedContext.DefaultUser;
+            _defaultProfile = _sharedContext.DefaultProfile;
 
-            _defaultProfile = _sharedContext.DbContext.Set<Profile>().FindAsync(_defaultUser.ProfileCardNumber).Result;
             _copy = DataGenerator.Get<Copy>(1).First();
+            _copy.CopyHistory = null;
 
             var copy2 = DataGenerator.Get<Copy>(1).First();
             var copy3 = DataGenerator.Get<Copy>(1).First();
 
             copy2.IsAvailable = false;
             copy3.IsAvailable = false;
+            copy2.CopyHistory.Clear();
+            copy3.CopyHistory.Clear();
 
             _rentalProfile = DataGenerator.Get<Profile>(1).First();
             _rentalProfile.CurrrentRentals = null;
+            _rentalProfile.CurrrentReservations = null;
+            _rentalProfile.ProfileHistory.Clear();
 
             _rentals = DataGenerator.Get<Rental>(2);
 
@@ -101,7 +107,7 @@ namespace WebAPITests.Integration
             {
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(new { rentalRequest, _defaultProfile.LibraryCardNumber })
+                Content = JsonContent.Create(rentalRequest)
             };
 
             var response = await _client.SendAsync(request);

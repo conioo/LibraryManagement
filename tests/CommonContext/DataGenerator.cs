@@ -95,7 +95,6 @@ namespace CommonContext
               .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7))
               .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.BetweenDateOnly(reservation.BeginDate.AddDays(1), reservation.EndDate));
 
-
             var profileHistoryGenerator = new Faker<ProfileHistory>()
                .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
                {
@@ -124,18 +123,16 @@ namespace CommonContext
                    return new List<Reservation> { reservation };
                });
 
-            copyHistoryGenerator = new Faker<CopyHistory>();
-            //.RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
-            //{
-            //    //var archival = archivalRentalGenerator.Generate(1).First();
-            //    //return new List<ArchivalRental> { archival };
-            //    return new List<ArchivalRental>();
-            //}).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
-            //{
-            //    //var archival = archivalReservationGenerator.Generate(1).First();
-            //    //return new List<ArchivalReservation> { archival };
-            //    return new List<ArchivalReservation>();
-            //});
+            copyHistoryGenerator = new Faker<CopyHistory>()
+            .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
+            {
+                var archival = archivalRentalGenerator.Generate(1).First();
+                return new List<ArchivalRental> { archival };
+            }).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
+            {
+                var archival = archivalReservationGenerator.Generate(1).First();
+                return new List<ArchivalReservation> { archival };
+            });
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);

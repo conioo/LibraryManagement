@@ -151,8 +151,6 @@ namespace WebAPITests.Integration
             IdentityDbContext.SaveChanges();
         }
 
-
-
         public void RefreshMock<T>() where T : class
         {
             var service = GetMock<T>();
@@ -295,6 +293,9 @@ namespace WebAPITests.Integration
             {
                 profile.CurrrentRentals = null;
                 profile.CurrrentReservations = null;
+
+                profile.ProfileHistory.ArchivalRentals = null;
+                profile.ProfileHistory.ArchivalReservations = null;
             }
 
             profile.IsActive = _options.isActiveProfile;
@@ -312,7 +313,7 @@ namespace WebAPITests.Integration
         }
         public async Task<ApplicationUser> GetBasicConfirmUser()
         {
-            var user = DataGenerator.Get<ApplicationUser>(1).First();
+            var user = DataGenerator.Get<ApplicationUser>(1).First(); 
 
             await UserManager.CreateAsync(user, DataGenerator.GetUserPassword);
 

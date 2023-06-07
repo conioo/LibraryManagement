@@ -1,7 +1,9 @@
 ﻿#pragma warning disable CS8618
+using Domain.Interfaces;
+
 namespace Domain.Entities
 {
-    public class CopyHistory
+    public class CopyHistory : IHistory
     {
         public string Id { get; set; }
         public virtual ICollection<ArchivalRental>? ArchivalRentals { get; set; }
