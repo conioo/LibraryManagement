@@ -43,22 +43,6 @@ namespace Application.Services
             _logger.LogInformation($"{_userResolverService.GetUserName} removed user: {id}");
         }
 
-        public override async Task<UserResponse> AddAsync(RegisterRequest dto)
-        {
-            var user = _mapper.Map<ApplicationUser>(dto);
-
-            var result = await _userManager.CreateAsync(user);
-
-            if (!result.Succeeded)
-            {
-                throw new IdentityException(result.Errors);
-            }
-
-            _logger.LogInformation($"{_userResolverService.GetUserName} added user: {dto.UserName}");
-
-            return _mapper.Map<UserResponse>(user);
-        }
-
         public async Task<UserResponse> GetUserAsync(ClaimsPrincipal principal)
         {
             var userId = _userManager.GetUserId(principal);

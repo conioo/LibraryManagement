@@ -11,10 +11,10 @@ namespace WebAPITests.Integration.SharedContextBuilders
             {
                 options.controllerPrefix = Items.Prefix;
                 options.addFakePolicyEvaluator = true;
-                //options.addOldFakePolicyEvaluator = true;
                 options.addDefaultUser = true;
             });
         }
+
         public SharedContext Value { get; }
     }
 }

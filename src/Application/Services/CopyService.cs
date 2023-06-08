@@ -20,8 +20,6 @@ namespace Application.Services
 
         public override async Task<CopyResponse> AddAsync(CopyRequest dto)
         {
-            //copy history stworzyć
-            
             var item = await _unitOfWork.Set<Item>().FindAsync(dto.ItemId);
 
             if (item is null)
@@ -40,7 +38,7 @@ namespace Application.Services
 
             for (int i = 0; i < dto.Count; ++i)
             {
-                copies.Add(new Copy { Item = item, Library = library });
+                copies.Add(new Copy { Item = item, Library = library, CopyHistory = new CopyHistory() });
             }
 
             await _unitOfWork.Set<Copy>().AddRangeAsync(copies);

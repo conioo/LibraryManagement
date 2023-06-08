@@ -19,13 +19,13 @@ namespace WebAPITests.Integration
 {
     public class RentalsControllerTests : IClassFixture<RentalContextBuilder>, IDisposable
     {
-        private readonly SharedContext _sharedContext;
         private readonly HttpClient _client;
-        private readonly ApplicationUser _defaultUser;
-        private readonly IEnumerable<Rental> _rentals;
         private readonly Copy _copy;
         private readonly Profile _defaultProfile;
+        private readonly ApplicationUser _defaultUser;
         private readonly Profile _rentalProfile;
+        private readonly IEnumerable<Rental> _rentals;
+        private readonly SharedContext _sharedContext;
 
         public RentalsControllerTests(RentalContextBuilder sharedContextBuilder)
         {
@@ -66,36 +66,227 @@ namespace WebAPITests.Integration
             _sharedContext.RefreshDb();
         }
 
-        public void Dispose()
-        {
-            _sharedContext.ResetState();
-        }
-
         [Fact]
-        async Task GetRentalByIdAsync_ForValidId_Returns200Ok()
+        async Task AddRentalAsync_ForDeactiveProfile_Returns400BadRequest()
         {
-            var requestUri = QueryHelpers.AddQueryString(Rentals.GetRentalById, "id", _rentals.First().Id);
+            _defaultProfile.IsActive = false;
+            _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
+            await _sharedContext.DbContext.SaveChangesAsync();
 
-            var response = await _client.GetAsync(requestUri);
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
 
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalRequest)
+            };
 
-            var result = await response.Content.ReadFromJsonAsync<RentalResponse>();
+            var response = await _client.SendAsync(request);
 
             _sharedContext.RefreshDb();
 
-            result.Should().BeEquivalentTo(_rentals.First(), options => options.ExcludingMissingMembers());
-            result.ItemTitle.Should().NotBeNull().And.Be(_rentals.First().Copy.Item.Title);
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("profile is deactivate");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                   .Include(rProfile => rProfile.CurrrentRentals)
+                   .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                   .FirstOrDefaultAsync();
+
+            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
         }
 
         [Fact]
-        async Task GetRentalByIdAsync_ForInvalidId_Returns404NotFound()
+        async Task AddRentalAsync_ForInvalidCopyInventoryNumber_Returns404NotFound()
         {
-            var requestUri = QueryHelpers.AddQueryString(Rentals.GetRentalById, "id", "null");
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = "null_null" };
 
-            var response = await _client.GetAsync(requestUri);
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("copy not found");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
+
+            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalAsync_ForInvalidModel_Returns400BadRequest()
+        {
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = String.Empty };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var validationProblemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+            validationProblemDetails.Errors.Count.Should().Be(1);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
+
+            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalAsync_ForInvalidProfileLibraryCardNumber_Returns404NotFound()
+        {
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber=null_null"),
+                Content = JsonContent.Create(rentalRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("profile not found");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalAsync_ForMaxRentals_Returns400BadRequest()
+        {
+            _defaultProfile.CurrrentRentals = (ICollection<Rental>)DataGenerator.Get<Rental>(5);
+
+            _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
+            await _sharedContext.DbContext.SaveChangesAsync();
+
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("user has a maximum number of rentals");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(7);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                   .Include(rProfile => rProfile.CurrrentRentals)
+                   .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                   .FirstOrDefaultAsync();
+
+            refreshProfile.CurrrentRentals.Count().Should().Be(5);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalAsync_ForUnavailableCopy_Returns400BadRequest()
+        {
+            _copy.IsAvailable = false;
+
+            _sharedContext.DbContext.Set<Copy>().Update(_copy);
+            await _sharedContext.DbContext.SaveChangesAsync();
+
+            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("copy doesn't available");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
+
+            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
         }
 
         [Fact]
@@ -158,161 +349,20 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task AddRentalAsync_ForInvalidModel_Returns400BadRequest()
-        {
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = String.Empty };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var validationProblemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-
-            validationProblemDetails.Errors.Count.Should().Be(1);
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalAsync_ForInvalidCopyInventoryNumber_Returns404NotFound()
-        {
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = "null_null" };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("copy not found");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalAsync_ForUnavailableCopy_Returns400BadRequest()
-        {
-            _copy.IsAvailable = false;
-
-            _sharedContext.DbContext.Set<Copy>().Update(_copy);
-            await _sharedContext.DbContext.SaveChangesAsync();
-
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("copy doesn't available");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalAsync_ForInvalidProfileLibraryCardNumber_Returns404NotFound()
-        {
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber=null_null"),
-                Content = JsonContent.Create(rentalRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("profile not found");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalAsync_ForDeactiveProfile_Returns400BadRequest()
+        async Task AddRentalsAsync_ForDeactiveProfile_Returns400BadRequest()
         {
             _defaultProfile.IsActive = false;
             _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
             await _sharedContext.DbContext.SaveChangesAsync();
 
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
+            var rentalsRequest = new List<RentalRequest>() {
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber }};
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalRequest)
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalsRequest)
             };
 
             var response = await _client.SendAsync(request);
@@ -334,46 +384,10 @@ namespace WebAPITests.Integration
 
             refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
 
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
 
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
+            copy1.IsAvailable.Should().BeTrue();
 
-        [Fact]
-        async Task AddRentalAsync_ForMaxRentals_Returns400BadRequest()
-        {
-            _defaultProfile.CurrrentRentals = (ICollection<Rental>)DataGenerator.Get<Rental>(5);
-
-            _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
-            await _sharedContext.DbContext.SaveChangesAsync();
-
-            var rentalRequest = new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRental + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("user has a maximum number of rentals");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(7);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                   .Include(rProfile => rProfile.CurrrentRentals)
-                   .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                   .FirstOrDefaultAsync();
-
-            refreshProfile.CurrrentRentals.Count().Should().Be(5);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -381,15 +395,9 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task AddRentalsAsync_ForValidModels_Returns200Ok()
+        async Task AddRentalsAsync_ForEmptyRentals_Returns400BadRequest()
         {
-            var copy = DataGenerator.Get<Copy>(1).First();
-            _sharedContext.DbContext.Set<Copy>().Add(copy);
-            await _sharedContext.DbContext.SaveChangesAsync();
-
-            var rentalsRequest = new List<RentalRequest>() {
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
-                new RentalRequest() { CopyInventoryNumber = copy.InventoryNumber  } };
+            var rentalsRequest = new List<RentalRequest>() { };
 
             var request = new HttpRequestMessage()
             {
@@ -402,28 +410,58 @@ namespace WebAPITests.Integration
 
             _sharedContext.RefreshDb();
 
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
 
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(4);
+            var validationProblemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
 
-            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+            validationProblemDetails.Errors.Count().Should().Be(1);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
                     .Include(rProfile => rProfile.CurrrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
-            var copy2 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copy.InventoryNumber);
-
-            copy1.IsAvailable.Should().BeFalse();
-            copy2.IsAvailable.Should().BeFalse();
-
-            refreshedProfile.CurrrentRentals.Should().NotBeNullOrEmpty();
-            refreshedProfile.CurrrentRentals.Count.Should().Be(2);
+            refreshProfile.CurrrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.Is<Rental>(rental => rental.Copy.InventoryNumber == _copy.InventoryNumber && rental.Profile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)), Times.Once);
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.Is<Rental>(rental => rental.Copy.InventoryNumber == copy.InventoryNumber && rental.Profile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)), Times.Once);
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalsAsync_ForInvalidProfileLibraryCardNumber_Returns404NotFound()
+        {
+            var rentalsRequest = new List<RentalRequest>() {
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber }};
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber=null_null"),
+                Content = JsonContent.Create(rentalsRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("profile not found");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
+
+            copy1.IsAvailable.Should().BeTrue();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
         }
 
         [Fact]
@@ -485,66 +523,11 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task AddRentalsAsync_ForTooManyRentals_Returns400BadRequest()
+        async Task AddRentalsAsync_ForOneCopyTwoTimes_Returns400BadRequest()
         {
-            var copies = DataGenerator.Get<Copy>(5).ToList();
-            _sharedContext.DbContext.Set<Copy>().AddRange(copies);
-            await _sharedContext.DbContext.SaveChangesAsync();
-
             var rentalsRequest = new List<RentalRequest>() {
                 new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
-                new RentalRequest() { CopyInventoryNumber = copies[0].InventoryNumber  },
-                new RentalRequest() { CopyInventoryNumber = copies[1].InventoryNumber  },
-                new RentalRequest() { CopyInventoryNumber = copies[2].InventoryNumber  },
-                new RentalRequest() { CopyInventoryNumber = copies[3].InventoryNumber  },
-                new RentalRequest() { CopyInventoryNumber = copies[4].InventoryNumber  },};
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalsRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-            responseString.Should().Be("it isn't possible to add so many rentals");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
-            var copy2 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[0].InventoryNumber);
-            var copy3 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[1].InventoryNumber);
-            var copy4 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[2].InventoryNumber);
-            var copy5 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[3].InventoryNumber);
-
-            copy1.IsAvailable.Should().BeTrue();
-            copy2.IsAvailable.Should().BeTrue();
-            copy3.IsAvailable.Should().BeTrue();
-            copy4.IsAvailable.Should().BeTrue();
-            copy5.IsAvailable.Should().BeTrue();
-
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalsAsync_ForEmptyRentals_Returns400BadRequest()
-        {
-            var rentalsRequest = new List<RentalRequest>() { };
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber  }};
 
             var request = new HttpRequestMessage()
             {
@@ -569,6 +552,52 @@ namespace WebAPITests.Integration
                     .Include(rProfile => rProfile.CurrrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
+
+            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
+
+            copy1.IsAvailable.Should().BeTrue();
+
+            refreshProfile.CurrrentRentals.Should().BeEmpty();
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddRentalsAsync_ForOneInvalidCopyInventoryNumber_Returns404NotFound()
+        {
+            var rentalsRequest = new List<RentalRequest>() {
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
+                new RentalRequest() { CopyInventoryNumber = "null_null"  }};
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalsRequest)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var stringResponse = await response.Content.ReadAsStringAsync();
+
+            stringResponse.Should().Be($"copy null_null not found");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+
+            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
+
+            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
+
+            copy1.IsAvailable.Should().BeTrue();
 
             refreshProfile.CurrrentRentals.Should().BeEmpty();
 
@@ -669,132 +698,19 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task AddRentalsAsync_ForOneCopyTwoTimes_Returns400BadRequest()
+        async Task AddRentalsAsync_ForTooManyRentals_Returns400BadRequest()
         {
-            var rentalsRequest = new List<RentalRequest>() {
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber  }};
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalsRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var validationProblemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-
-            validationProblemDetails.Errors.Count().Should().Be(1);
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
-
-            copy1.IsAvailable.Should().BeTrue();
-
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalsAsync_ForOneInvalidCopyInventoryNumber_Returns404NotFound()
-        {
-            var rentalsRequest = new List<RentalRequest>() {
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
-                new RentalRequest() { CopyInventoryNumber = "null_null"  }};
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
-                Content = JsonContent.Create(rentalsRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-
-            var stringResponse = await response.Content.ReadAsStringAsync();
-
-            stringResponse.Should().Be($"copy null_null not found");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
-                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                    .FirstOrDefaultAsync();
-
-            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
-
-            copy1.IsAvailable.Should().BeTrue();
-
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalsAsync_ForInvalidProfileLibraryCardNumber_Returns404NotFound()
-        {
-            var rentalsRequest = new List<RentalRequest>() {
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber }};
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber=null_null"),
-                Content = JsonContent.Create(rentalsRequest)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("profile not found");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-
-            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
-
-            copy1.IsAvailable.Should().BeTrue();
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task AddRentalsAsync_ForDeactiveProfile_Returns400BadRequest()
-        {
-            _defaultProfile.IsActive = false;
-            _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
+            var copies = DataGenerator.Get<Copy>(5).ToList();
+            _sharedContext.DbContext.Set<Copy>().AddRange(copies);
             await _sharedContext.DbContext.SaveChangesAsync();
 
             var rentalsRequest = new List<RentalRequest>() {
-                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber }};
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
+                new RentalRequest() { CopyInventoryNumber = copies[0].InventoryNumber  },
+                new RentalRequest() { CopyInventoryNumber = copies[1].InventoryNumber  },
+                new RentalRequest() { CopyInventoryNumber = copies[2].InventoryNumber  },
+                new RentalRequest() { CopyInventoryNumber = copies[3].InventoryNumber  },
+                new RentalRequest() { CopyInventoryNumber = copies[4].InventoryNumber  },};
 
             var request = new HttpRequestMessage()
             {
@@ -810,22 +726,28 @@ namespace WebAPITests.Integration
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
 
             var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("profile is deactivate");
+            responseString.Should().Be("it isn't possible to add so many rentals");
 
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                   .Include(rProfile => rProfile.CurrrentRentals)
-                   .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
-                   .FirstOrDefaultAsync();
-
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
 
             var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
+            var copy2 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[0].InventoryNumber);
+            var copy3 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[1].InventoryNumber);
+            var copy4 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[2].InventoryNumber);
+            var copy5 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copies[3].InventoryNumber);
 
             copy1.IsAvailable.Should().BeTrue();
+            copy2.IsAvailable.Should().BeTrue();
+            copy3.IsAvailable.Should().BeTrue();
+            copy4.IsAvailable.Should().BeTrue();
+            copy5.IsAvailable.Should().BeTrue();
 
+            refreshProfile.CurrrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -833,12 +755,21 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task RenewalAsync_ForValidId_Returns200Ok()
+        async Task AddRentalsAsync_ForValidModels_Returns200Ok()
         {
+            var copy = DataGenerator.Get<Copy>(1).First();
+            _sharedContext.DbContext.Set<Copy>().Add(copy);
+            await _sharedContext.DbContext.SaveChangesAsync();
+
+            var rentalsRequest = new List<RentalRequest>() {
+                new RentalRequest() { CopyInventoryNumber = _copy.InventoryNumber },
+                new RentalRequest() { CopyInventoryNumber = copy.InventoryNumber  } };
+
             var request = new HttpRequestMessage()
             {
-                Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Renewal + $"?id={_rentals.First().Id}"),
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.AddRentals + $"?profileLibraryCardNumber={_defaultProfile.LibraryCardNumber}"),
+                Content = JsonContent.Create(rentalsRequest)
             };
 
             var response = await _client.SendAsync(request);
@@ -847,51 +778,83 @@ namespace WebAPITests.Integration
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
-            var renewalRental = await _sharedContext.DbContext.Set<Rental>().FindAsync(_rentals.First().Id);
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(4);
 
-            renewalRental.Should().NotBeNull();
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
+                    .FirstOrDefaultAsync();
 
-            renewalRental.LastModified.Should().BeAfter(renewalRental.Created);
-            renewalRental.NumberOfRenewals.Should().Be(1);
-            renewalRental.EndDate.Should().Be(renewalRental.BeginDate.AddDays(60));
+            var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
+            var copy2 = await _sharedContext.DbContext.Set<Copy>().FindAsync(copy.InventoryNumber);
+
+            copy1.IsAvailable.Should().BeFalse();
+            copy2.IsAvailable.Should().BeFalse();
+
+            refreshedProfile.CurrrentRentals.Should().NotBeNullOrEmpty();
+            refreshedProfile.CurrrentRentals.Count.Should().Be(2);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(30))), Times.Once);
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.Is<Rental>(rental => rental.Copy.InventoryNumber == _copy.InventoryNumber && rental.Profile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)), Times.Once);
+            countingOfPenaltyChangesMock.Verify(service => service.AddRental(It.Is<Rental>(rental => rental.Copy.InventoryNumber == copy.InventoryNumber && rental.Profile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)), Times.Once);
         }
 
         [Fact]
-        async Task RenewalAsync_ForTheLastRenewal_Returns200Ok()
+        async Task GetRentalByIdAsync_ForInvalidId_Returns404NotFound()
         {
-            _rentals.First().NumberOfRenewals = 1;
-            _rentals.First().EndDate = _rentals.First().EndDate.AddDays(30);
+            var requestUri = QueryHelpers.AddQueryString(Rentals.GetRentalById, "id", "null");
 
-            _sharedContext.DbContext.Set<Rental>().Update(_rentals.First());
-            await _sharedContext.DbContext.SaveChangesAsync();
+            var response = await _client.GetAsync(requestUri);
 
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+        }
+
+        [Fact]
+        async Task GetRentalByIdAsync_ForValidId_Returns200Ok()
+        {
+            var requestUri = QueryHelpers.AddQueryString(Rentals.GetRentalById, "id", _rentals.First().Id);
+
+            var response = await _client.GetAsync(requestUri);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            var result = await response.Content.ReadFromJsonAsync<RentalResponse>();
+
+            _sharedContext.RefreshDb();
+
+            result.Should().BeEquivalentTo(_rentals.First(), options => options.ExcludingMissingMembers());
+            result.ItemTitle.Should().NotBeNull().And.Be(_rentals.First().Copy.Item.Title);
+        }
+
+        [Fact]
+        async Task RemoveRentalByIdAsync_ForInvalidId_Returns404NotFound()
+        {
             var request = new HttpRequestMessage()
             {
-                Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Renewal + $"?id={_rentals.First().Id}"),
+                Method = HttpMethod.Delete,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.RemoveRentalById + $"?id=null_null"),
             };
 
             var response = await _client.SendAsync(request);
 
-            _sharedContext.RefreshDb();
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+        }
+
+        [Fact]
+        async Task RemoveRentalByIdAsync_ForValidId_Returns200Ok()
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Delete,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.RemoveRentalById + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-
-            var renewalRental = await _sharedContext.DbContext.Set<Rental>().FindAsync(_rentals.First().Id);
-
-            renewalRental.Should().NotBeNull();
-
-            renewalRental.LastModified.Should().BeAfter(renewalRental.Created);
-            renewalRental.NumberOfRenewals.Should().Be(2);
-            renewalRental.EndDate.Should().Be(renewalRental.BeginDate.AddDays(90));
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(60))), Times.Once);
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(1);
         }
 
         [Fact]
@@ -942,6 +905,113 @@ namespace WebAPITests.Integration
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
             countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.IsAny<string>(), It.IsAny<DateOnly>()), Times.Never);
+        }
+
+        [Fact]
+        async Task RenewalAsync_ForTheLastRenewal_Returns200Ok()
+        {
+            _rentals.First().NumberOfRenewals = 1;
+            _rentals.First().EndDate = _rentals.First().EndDate.AddDays(30);
+
+            _sharedContext.DbContext.Set<Rental>().Update(_rentals.First());
+            await _sharedContext.DbContext.SaveChangesAsync();
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Renewal + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            var renewalRental = await _sharedContext.DbContext.Set<Rental>().FindAsync(_rentals.First().Id);
+
+            renewalRental.Should().NotBeNull();
+
+            renewalRental.LastModified.Should().BeAfter(renewalRental.Created);
+            renewalRental.NumberOfRenewals.Should().Be(2);
+            renewalRental.EndDate.Should().Be(renewalRental.BeginDate.AddDays(90));
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(60))), Times.Once);
+        }
+
+        [Fact]
+        async Task RenewalAsync_ForValidId_Returns200Ok()
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Renewal + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            var renewalRental = await _sharedContext.DbContext.Set<Rental>().FindAsync(_rentals.First().Id);
+
+            renewalRental.Should().NotBeNull();
+
+            renewalRental.LastModified.Should().BeAfter(renewalRental.Created);
+            renewalRental.NumberOfRenewals.Should().Be(1);
+            renewalRental.EndDate.Should().Be(renewalRental.BeginDate.AddDays(60));
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(30))), Times.Once);
+        }
+
+        [Fact]
+        async Task ReturnAsync_ForInvalidId_Returns404NotFound()
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Return + $"?id=null_null"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
+
+            var refreshedCopy = await _sharedContext.DbContext.Set<Copy>()
+                .Include(copy => copy.CopyHistory)
+                .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
+                .Include(copy => copy.CurrentRental)
+                .Where(copy => copy.InventoryNumber == _rentals.First().Copy.InventoryNumber)
+                .FirstOrDefaultAsync();
+
+            refreshedCopy.Should().NotBeNull();
+            refreshedCopy.CurrentRental.Should().NotBeNull();
+            refreshedCopy.IsAvailable.Should().BeFalse();
+            refreshedCopy.CopyHistory.ArchivalRentals.Count().Should().Be(0);
+            refreshedCopy.LastModified.Should().Be(refreshedCopy.Created);
+
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                     .Include(profile => profile.ProfileHistory)
+                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                     .Include(profile => profile.CurrrentRentals)
+                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
+                     .FirstOrDefaultAsync();
+
+            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
         }
 
         [Fact]
@@ -1003,12 +1073,49 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
-        async Task ReturnAsync_ForInvalidId_Returns404NotFound()
+        async Task ReturnsAsync_ForOneEmptyID_Returns400BadRequest()
         {
+            var ids = new List<string>()
+            {
+                _rentals.ElementAt(0).Id,
+                ""
+            };
+
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Return + $"?id=null_null"),
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
+                Content = JsonContent.Create(ids)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var details = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+            details.Errors.Count().Should().Be(1);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task ReturnsAsync_ForOneInvalidId_Returns404NotFound()
+        {
+            var ids = new List<string>()
+            {
+                _rentals.ElementAt(0).Id,
+                "null_null"
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
+                Content = JsonContent.Create(ids)
             };
 
             var response = await _client.SendAsync(request);
@@ -1017,21 +1124,68 @@ namespace WebAPITests.Integration
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
 
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("rental with id: null_null not found");
+
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
             _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
 
-            var refreshedCopy = await _sharedContext.DbContext.Set<Copy>()
+            var refreshedCopy0 = await _sharedContext.DbContext.Set<Copy>()
                 .Include(copy => copy.CopyHistory)
                 .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
                 .Include(copy => copy.CurrentRental)
-                .Where(copy => copy.InventoryNumber == _rentals.First().Copy.InventoryNumber)
+                .Where(copy => copy.InventoryNumber == _rentals.ElementAt(0).Copy.InventoryNumber)
                 .FirstOrDefaultAsync();
 
-            refreshedCopy.Should().NotBeNull();
-            refreshedCopy.CurrentRental.Should().NotBeNull();
-            refreshedCopy.IsAvailable.Should().BeFalse();
-            refreshedCopy.CopyHistory.ArchivalRentals.Count().Should().Be(0);
-            refreshedCopy.LastModified.Should().Be(refreshedCopy.Created);
+            refreshedCopy0.Should().NotBeNull();
+            refreshedCopy0.CurrentRental.Should().NotBeNull();
+            refreshedCopy0.IsAvailable.Should().BeFalse();
+            refreshedCopy0.CopyHistory.ArchivalRentals.Count().Should().Be(0);
+            refreshedCopy0.LastModified.Should().Be(refreshedCopy0.Created);
+
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                     .Include(profile => profile.ProfileHistory)
+                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                     .Include(profile => profile.CurrrentRentals)
+                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
+                     .FirstOrDefaultAsync();
+
+            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task ReturnsAsync_ForTwoOfTheSameId_Returns400BadRequest()
+        {
+            var ids = new List<string>()
+            {
+                _rentals.ElementAt(0).Id,
+                _rentals.ElementAt(0).Id
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
+                Content = JsonContent.Create(ids)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            responseString.Should().Be("Id repetition detected");
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
 
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
@@ -1138,163 +1292,9 @@ namespace WebAPITests.Integration
             countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.Is<Rental>(rental => rental.Id == _rentals.ElementAt(1).Id)), Times.Once);
         }
 
-        [Fact]
-        async Task ReturnsAsync_ForOneInvalidId_Returns404NotFound()
+        public void Dispose()
         {
-            var ids = new List<string>()
-            {
-                _rentals.ElementAt(0).Id,
-                "null_null"
-            };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
-                Content = JsonContent.Create(ids)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("rental with id: null_null not found");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
-
-            var refreshedCopy0 = await _sharedContext.DbContext.Set<Copy>()
-                .Include(copy => copy.CopyHistory)
-                .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
-                .Include(copy => copy.CurrentRental)
-                .Where(copy => copy.InventoryNumber == _rentals.ElementAt(0).Copy.InventoryNumber)
-                .FirstOrDefaultAsync();
-
-            refreshedCopy0.Should().NotBeNull();
-            refreshedCopy0.CurrentRental.Should().NotBeNull();
-            refreshedCopy0.IsAvailable.Should().BeFalse();
-            refreshedCopy0.CopyHistory.ArchivalRentals.Count().Should().Be(0);
-            refreshedCopy0.LastModified.Should().Be(refreshedCopy0.Created);
-
-            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
-                     .Include(profile => profile.ProfileHistory)
-                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
-                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
-                     .FirstOrDefaultAsync();
-
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
-            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task ReturnsAsync_ForOneEmptyID_Returns400BadRequest()
-        {
-            var ids = new List<string>()
-            {
-                _rentals.ElementAt(0).Id,
-                ""
-            };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
-                Content = JsonContent.Create(ids)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var details = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
-
-            details.Errors.Count().Should().Be(1);
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task ReturnsAsync_ForTwoOfTheSameId_Returns400BadRequest()
-        {
-            var ids = new List<string>()
-            {
-                _rentals.ElementAt(0).Id,
-                _rentals.ElementAt(0).Id
-            };
-
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Patch,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
-                Content = JsonContent.Create(ids)
-            };
-
-            var response = await _client.SendAsync(request);
-
-            _sharedContext.RefreshDb();
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            responseString.Should().Be("Id repetition detected");
-
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
-            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
-
-            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
-                     .Include(profile => profile.ProfileHistory)
-                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
-                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
-                     .FirstOrDefaultAsync();
-
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
-            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
-
-            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
-            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
-        }
-
-        [Fact]
-        async Task RemoveRentalByIdAsync_ForValidId_Returns200Ok()
-        {
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.RemoveRentalById + $"?id={_rentals.First().Id}"),
-            };
-
-            var response = await _client.SendAsync(request);
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(1);
-        }
-
-        [Fact]
-        async Task RemoveRentalByIdAsync_ForInvalidId_Returns404NotFound()
-        {
-            var request = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri(_client.BaseAddress + Rentals.RemoveRentalById + $"?id=null_null"),
-            };
-
-            var response = await _client.SendAsync(request);
-
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
-            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+            _sharedContext.ResetState();
         }
     }
 }

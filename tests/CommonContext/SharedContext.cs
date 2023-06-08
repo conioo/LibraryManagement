@@ -138,6 +138,16 @@ namespace WebAPITests.Integration
                 RefreshMock<ICountingOfPenaltyCharges>();
             }
 
+            if (_options.addEmailServiceMock)
+            {
+                RefreshMock<IEmailService>();
+            }
+
+            if(_options.addEndOfReservationMock)
+            {
+                RefreshMock<IEndOfReservation>();
+            }
+
             if (_options.addDefaultUser)
             {
                 DefaultUser = GetDefaultUser();

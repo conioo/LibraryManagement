@@ -1,11 +1,5 @@
 ﻿using CommonContext.SharedContextBuilders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WebAPI.ApiRoutes;
-using WebAPITests.Integration;
 
 namespace WebAPITests.Integration.SharedContextBuilders
 {
@@ -18,8 +12,10 @@ namespace WebAPITests.Integration.SharedContextBuilders
                 options.controllerPrefix = Admin.Prefix;
                 options.addFakePolicyEvaluator = true;
                 options.addEmailServiceMock = true;
+                options.addDefaultUser = true;
             });
         }
+
         public SharedContext Value { get; }
     }
 }

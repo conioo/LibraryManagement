@@ -13,8 +13,9 @@ namespace WebAPITests.Integration.SharedContextBuilders
                 options.addFakePolicyEvaluator = true;
                 options.addDefaultUser = true;
             });
-            
+
         }
+
         public SharedContext Value { get; }
     }
 }
