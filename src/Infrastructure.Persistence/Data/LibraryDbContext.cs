@@ -150,36 +150,7 @@ namespace Infrastructure.Persistence.Data
 
         public override int SaveChanges()
         {
-            var entries = ChangeTracker.Entries().Where(e => e.Entity is IAuditableEntity && (e.State == EntityState.Modified || e.State == EntityState.Added));
-
-            if (!entries.Any())
-            {
-                return base.SaveChanges();
-            }
-
-            var userName = _userResolverService.GetUserName;
-
-            DateTime now;
-
-            foreach (var entityEntry in entries)
-            {
-                now = DateTime.Now;
-
-                var auditable = (IAuditableEntity)entityEntry.Entity;
-
-                auditable.LastModifiedBy = userName;
-                auditable.LastModified = now;
-
-                if (entityEntry.State == EntityState.Added)
-                {
-                    auditable.CreatedBy = userName;
-                    auditable.Created = now;
-                }
-            }
-
-            return base.SaveChanges();
+            return SaveChangesAsync().Result;
         }
-
-
     }
 }

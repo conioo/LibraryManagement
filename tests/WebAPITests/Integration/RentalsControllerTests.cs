@@ -9,6 +9,7 @@ using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
@@ -828,6 +829,126 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
+        async Task PayThePenaltyAsync_ForTheSecondCall_Returns404NotFound()
+        {
+            await _sharedContext.Cache.SetStringAsync(_rentals.First().Id, String.Empty, new DistributedCacheEntryOptions()
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.PayThePenalty + $"?id={_rentals.First().Id}"),
+            };
+
+            var request2 = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.PayThePenalty + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response = await _client.SendAsync(request2);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(1);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(1);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.Is<Rental>(rental => rental.Id == _rentals.First().Id)), Times.Once);
+        }
+
+        [Fact]
+        async Task PayThePenaltyAsync_ForValidIdAfterReturn_Returns200Ok()
+        {
+            await _sharedContext.Cache.SetStringAsync(_rentals.First().Id, String.Empty, new DistributedCacheEntryOptions()
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.PayThePenalty + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(1);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(1);
+
+            var refreshedCopy = await _sharedContext.DbContext.Set<Copy>()
+                .Include(copy => copy.CopyHistory)
+                .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
+                .Include(copy => copy.CurrentRental)
+                .Where(copy => copy.InventoryNumber == _rentals.First().Copy.InventoryNumber)
+                .FirstOrDefaultAsync();
+
+            refreshedCopy.Should().NotBeNull();
+            refreshedCopy.CurrentRental.Should().BeNull();
+            refreshedCopy.IsAvailable.Should().BeTrue();
+            refreshedCopy.CopyHistory.ArchivalRentals.Count().Should().Be(1);
+            refreshedCopy.CopyHistory.ArchivalRentals.First().Id.Should().Be(_rentals.First().Id);
+            refreshedCopy.LastModified.Should().BeAfter(refreshedCopy.Created);
+
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                     .Include(profile => profile.ProfileHistory)
+                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                     .Include(profile => profile.CurrrentRentals)
+                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
+                     .FirstOrDefaultAsync();
+
+            refreshedProfile.CurrrentRentals.Count().Should().Be(1);
+            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(1);
+            refreshedProfile.ProfileHistory.ArchivalRentals.First().Id.Should().Be(_rentals.First().Id);
+
+
+            var archivalRental = await _sharedContext.DbContext.Set<ArchivalRental>().FindAsync(_rentals.First().Id);
+
+            archivalRental.BeginDate.Should().Be(_rentals.First().BeginDate);
+            archivalRental.EndDate.Should().Be(_rentals.First().EndDate);
+            archivalRental.PenaltyCharge.Should().Be(_rentals.First().PenaltyCharge);
+            archivalRental.NumberOfRenewals.Should().Be(_rentals.First().NumberOfRenewals);
+            archivalRental.Profile.LibraryCardNumber.Should().Be(_rentals.First().Profile.LibraryCardNumber);
+            archivalRental.Copy.InventoryNumber.Should().Be(_rentals.First().Copy.InventoryNumber);
+            archivalRental.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.Is<Rental>(rental => rental.Id == _rentals.First().Id)), Times.Once);
+        }
+
+        [Fact]
+        async Task PayThePenaltyAsync_ForValidIdWithoutReturn_Returns400BadRequest()
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.PayThePenalty + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
         async Task RemoveRentalByIdAsync_ForInvalidId_Returns404NotFound()
         {
             var request = new HttpRequestMessage()
@@ -1073,6 +1194,60 @@ namespace WebAPITests.Integration
         }
 
         [Fact]
+        async Task ReturnAsync_LateReturn_Returns200Ok()
+        {
+            _rentals.First().PenaltyCharge = 15;
+
+            _sharedContext.DbContext.Set<Rental>().Update(_rentals.First());
+            _sharedContext.DbContext.SaveChanges();
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Return + $"?id={_rentals.First().Id}"),
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            response.Headers.Contains("payment-required").Should().BeTrue();
+            response.Headers.GetValues("payment-required").First().Should().Be($"{_rentals.First().Id}");
+
+            _sharedContext.Cache.GetString(_rentals.First().Id).Should().NotBeNull();
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(0);
+
+            var refreshedCopy = await _sharedContext.DbContext.Set<Copy>()
+                .Include(copy => copy.CopyHistory)
+                .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
+                .Include(copy => copy.CurrentRental)
+                .Where(copy => copy.InventoryNumber == _rentals.First().Copy.InventoryNumber)
+                .FirstOrDefaultAsync();
+
+            refreshedCopy.Should().NotBeNull();
+            refreshedCopy.CurrentRental.Should().NotBeNull();
+            refreshedCopy.IsAvailable.Should().BeFalse();
+            refreshedCopy.CopyHistory.ArchivalRentals.Count().Should().Be(0);
+
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                     .Include(profile => profile.ProfileHistory)
+                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                     .Include(profile => profile.CurrrentRentals)
+                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
+                     .FirstOrDefaultAsync();
+
+            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
         async Task ReturnsAsync_ForOneEmptyID_Returns400BadRequest()
         {
             var ids = new List<string>()
@@ -1156,6 +1331,93 @@ namespace WebAPITests.Integration
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
             countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.IsAny<Rental>()), Times.Never);
+        }
+
+        [Fact]
+        async Task ReturnsAsync_ForOneLateReturn_Returns200Ok()
+        {
+            _rentals.First().PenaltyCharge = 15;
+
+            _sharedContext.DbContext.Set<Rental>().Update(_rentals.First());
+            _sharedContext.DbContext.SaveChanges();
+
+            var ids = new List<string>()
+            {
+                _rentals.ElementAt(0).Id,
+                _rentals.ElementAt(1).Id
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Rentals.Returns),
+                Content = JsonContent.Create(ids)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            _sharedContext.RefreshDb();
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            response.Headers.Contains("payment-required").Should().BeTrue();
+            response.Headers.GetValues("payment-required").First().Should().Be($"{_rentals.First().Id}");
+
+            _sharedContext.Cache.GetString(_rentals.First().Id).Should().NotBeNull();
+
+
+            _sharedContext.DbContext.Set<Rental>().Count().Should().Be(1);
+            _sharedContext.DbContext.Set<ArchivalRental>().Count().Should().Be(1);
+
+            var refreshedCopy0 = await _sharedContext.DbContext.Set<Copy>()
+                .Include(copy => copy.CopyHistory)
+                .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
+                .Include(copy => copy.CurrentRental)
+                .Where(copy => copy.InventoryNumber == _rentals.ElementAt(0).Copy.InventoryNumber)
+                .FirstOrDefaultAsync();
+
+            refreshedCopy0.Should().NotBeNull();
+            refreshedCopy0.CurrentRental.Should().NotBeNull();
+            refreshedCopy0.IsAvailable.Should().BeFalse();
+            refreshedCopy0.CopyHistory.ArchivalRentals.Count().Should().Be(0);
+
+            var refreshedCopy1 = await _sharedContext.DbContext.Set<Copy>()
+               .Include(copy => copy.CopyHistory)
+               .ThenInclude(CopyHistory => CopyHistory.ArchivalRentals)
+               .Include(copy => copy.CurrentRental)
+               .Where(copy => copy.InventoryNumber == _rentals.ElementAt(1).Copy.InventoryNumber)
+               .FirstOrDefaultAsync();
+
+            refreshedCopy1.Should().NotBeNull();
+            refreshedCopy1.CurrentRental.Should().BeNull();
+            refreshedCopy1.IsAvailable.Should().BeTrue();
+            refreshedCopy1.CopyHistory.ArchivalRentals.Count().Should().Be(1);
+            refreshedCopy1.CopyHistory.ArchivalRentals.First().Id.Should().Be(_rentals.ElementAt(1).Id);
+            refreshedCopy1.LastModified.Should().BeAfter(refreshedCopy1.Created);
+
+            var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
+                     .Include(profile => profile.ProfileHistory)
+                     .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                     .Include(profile => profile.CurrrentRentals)
+                     .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
+                     .FirstOrDefaultAsync();
+
+            refreshedProfile.CurrrentRentals.Count().Should().Be(1);
+            refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(1);
+            refreshedProfile.ProfileHistory.ArchivalRentals.ElementAt(0).Id.Should().Be(_rentals.ElementAt(1).Id);
+
+            var archivalRental1 = await _sharedContext.DbContext.Set<ArchivalRental>().FindAsync(_rentals.ElementAt(1).Id);
+
+            archivalRental1.BeginDate.Should().Be(_rentals.ElementAt(1).BeginDate);
+            archivalRental1.EndDate.Should().Be(_rentals.ElementAt(1).EndDate);
+            archivalRental1.PenaltyCharge.Should().Be(_rentals.ElementAt(1).PenaltyCharge);
+            archivalRental1.NumberOfRenewals.Should().Be(_rentals.ElementAt(1).NumberOfRenewals);
+            archivalRental1.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(1).Profile.LibraryCardNumber);
+            archivalRental1.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(1).Copy.InventoryNumber);
+            archivalRental1.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
+
+            var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
+            countingOfPenaltyChangesMock.Verify(service => service.ReturnOfItem(It.Is<Rental>(rental => rental.Id == _rentals.ElementAt(1).Id)), Times.Once);
         }
 
         [Fact]

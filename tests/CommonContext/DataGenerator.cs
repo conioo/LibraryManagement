@@ -76,7 +76,6 @@ namespace CommonContext
                 .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGenerator.Generate());
 
             var rentalGenerator = new Faker<Rental>()
-                .RuleFor(rental => rental.PenaltyCharge, _ => 0)
                 .RuleFor(rental => rental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now)))
                 .RuleFor(rental => rental.EndDate, (_, rental) => rental.BeginDate.AddDays(30));
 

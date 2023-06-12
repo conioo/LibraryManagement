@@ -8,7 +8,9 @@ using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Settings;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Profile = Domain.Entities.Profile;
@@ -18,20 +20,38 @@ namespace Application.Services
 {
     public class RentalService : IRentalService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
+        private readonly IDistributedCache _cache;
         private readonly ICountingOfPenaltyCharges _countingOfPenaltyCharges;
-        private readonly RentalSettings _rentalSettings;
         private readonly ILogger<RentalService> _logger;
+        private readonly IMapper _mapper;
+        private readonly RentalSettings _rentalSettings;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public RentalService(IUnitOfWork unitOfWork, IMapper mapper, ICountingOfPenaltyCharges countingOfPenaltyCharges, IOptions<RentalSettings> options, ILogger<RentalService> logger)
+        public RentalService(IUnitOfWork unitOfWork, IMapper mapper, ICountingOfPenaltyCharges countingOfPenaltyCharges, IOptions<RentalSettings> options, ILogger<RentalService> logger, IDistributedCache cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _countingOfPenaltyCharges = countingOfPenaltyCharges;
             _rentalSettings = options.Value;
             _logger = logger;
+            _cache = cache;
         }
+
+        private ArchivalRental GetArchivalRental(Rental rental)
+        {
+            var archivalRental = _mapper.Map<ArchivalRental>(rental);
+            archivalRental.ReturnedDate = DateOnly.FromDateTime(DateTime.Now);
+
+            return archivalRental;
+        }
+        private async Task SetCacheForPayment(string id)
+        {
+            await _cache.SetStringAsync(id, String.Empty, new DistributedCacheEntryOptions()
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            });
+        }
+
         public async Task<RentalResponse> AddRentalAsync(RentalRequest request, string profileLibraryCardNumber)
         {
             var profile = await _unitOfWork.Set<Profile>()
@@ -163,6 +183,52 @@ namespace Application.Services
 
             return response;
         }
+        public async Task PayThePenaltyAsync(string id)
+        {
+            if (await _cache.GetStringAsync(id) == null)
+            {
+                throw new BadRequestException();
+            }
+
+            bool successfulPayment = true;
+
+            if (successfulPayment is false)
+            {
+                throw new ApiException();
+            }
+
+            var rental = await _unitOfWork.Set<Rental>()
+                      .Include(rental => rental.Profile)
+                      .ThenInclude(profile => profile.ProfileHistory)
+                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
+                      .Include(rental => rental.Copy)
+                      .ThenInclude(copy => copy.CopyHistory)
+                      .ThenInclude(copyHistory => copyHistory.ArchivalRentals)
+                      .Where(rental => rental.Id == id)
+                      .FirstOrDefaultAsync();
+
+            if (rental is null)
+            {
+                throw new NotFoundException();
+            }
+
+            var archivalRental = GetArchivalRental(rental);
+
+            await _unitOfWork.Set<ArchivalRental>().AddAsync(archivalRental);
+
+            rental.Copy.CopyHistory.ArchivalRentals.Add(archivalRental);
+            rental.Copy.IsAvailable = true;
+
+            rental.Profile.ProfileHistory.ArchivalRentals.Add(archivalRental);
+
+            _unitOfWork.Set<Rental>().Remove(rental);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _countingOfPenaltyCharges.ReturnOfItem(rental);
+
+            _logger.LogInformation($"Paid and returned rental: {rental.Id}");
+        }
         public async Task RemoveRentalByIdAsync(string id)
         {
             var rental = await _unitOfWork.Set<Rental>().FindAsync(id);
@@ -176,7 +242,7 @@ namespace Application.Services
 
             _countingOfPenaltyCharges.ReturnOfItem(rental);
 
-            _logger.LogWarning($"Removed rental: {rental.Id}");//user id
+            _logger.LogWarning($"Removed rental: {rental.Id}");
 
             await _unitOfWork.SaveChangesAsync();
         }
@@ -204,7 +270,7 @@ namespace Application.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task ReturnAsync(string id)
+        public async Task<bool> ReturnAsync(string id)
         {
             var rental = await _unitOfWork.Set<Rental>()
                 .Include(rental => rental.Profile)
@@ -219,6 +285,13 @@ namespace Application.Services
             if (rental is null)
             {
                 throw new NotFoundException();
+            }
+
+            if (rental.PenaltyCharge is not null)
+            {
+                await SetCacheForPayment(rental.Id);
+
+                return false;
             }
 
             var archivalRental = GetArchivalRental(rental);
@@ -237,17 +310,19 @@ namespace Application.Services
             _countingOfPenaltyCharges.ReturnOfItem(rental);
 
             _logger.LogInformation($"Returned rental: {rental.Id}");
-        }
 
-        public async Task ReturnsAsync(IEnumerable<string> ids)
+            return true;
+        }
+        public async Task<string> ReturnsAsync(IEnumerable<string> ids)
         {
             if (ids.Distinct().Count() != ids.Count())
             {
                 throw new BadRequestException("Id repetition detected");
             }
 
-
             var validRentals = new List<Rental>();
+            var idsToBePaid = new List<string>();
+            string result = string.Empty;
 
             foreach (var id in ids)
             {
@@ -264,6 +339,13 @@ namespace Application.Services
                 if (rental is null)
                 {
                     throw new NotFoundException($"rental with id: {id} not found");
+                }
+
+                if (rental.PenaltyCharge is not null)
+                {
+                    idsToBePaid.Add(rental.Id);
+
+                    continue;
                 }
 
                 var archivalRental = GetArchivalRental(rental);
@@ -287,14 +369,20 @@ namespace Application.Services
 
                 _logger.LogInformation($"Returned rental: {rental.Id}");
             }
-        }
 
-        private ArchivalRental GetArchivalRental(Rental rental)
-        {
-            var archivalRental = _mapper.Map<ArchivalRental>(rental);
-            archivalRental.ReturnedDate = DateOnly.FromDateTime(DateTime.Now);
+            foreach (var rentalId in idsToBePaid)
+            {
+                await SetCacheForPayment(rentalId);
 
-            return archivalRental;
+                result += $"{rentalId} ";
+            }
+
+            if (result != string.Empty)
+            {
+                result = result.Remove(result.Length - 1, 1);
+            }
+
+            return result;
         }
     }
 }

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -35,6 +36,7 @@ namespace WebAPITests.Integration
         public IJwtService JwtService { get; private set; }
         public ApplicationUser? DefaultUser { get; private set; }
         public Profile? DefaultProfile { get; private set; }
+        public IDistributedCache Cache { get; private set; }
 
         public IConfiguration Configuration;
 
@@ -75,6 +77,7 @@ namespace WebAPITests.Integration
             UserManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             JwtService = serviceProvider.GetRequiredService<IJwtService>();
             Configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            Cache = serviceProvider.GetRequiredService<IDistributedCache>();
 
             IdentityDbContext.Database.EnsureCreated();
             DbContext.Database.EnsureCreated();

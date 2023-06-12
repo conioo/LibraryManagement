@@ -11,6 +11,7 @@ namespace WebAPI.ApiRoutes
         public const string AddRental = "add";
         public const string AddRentals = "add-range";
         public const string RemoveRentalById = "remove";
+        public const string PayThePenalty = "pay-the-penalty";
 
         public const string Renewal = "Renewal";
 

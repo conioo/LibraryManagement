@@ -96,6 +96,7 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
                 };
 
 
@@ -197,6 +198,7 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
                 };
             }
         }
@@ -259,6 +261,7 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
                 };
             }
         }
@@ -372,6 +375,7 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
                 };
             }
         }
@@ -471,6 +475,7 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Renewal, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
+                    new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
                 };
             }
         }

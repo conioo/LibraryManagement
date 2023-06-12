@@ -88,5 +88,10 @@ namespace Infrastructure.Identity.Data
 
             return base.SaveChangesAsync(cancellationToken);
         }
+
+        public override int SaveChanges()
+        {
+            return SaveChangesAsync().Result;
+        }
     }
 }

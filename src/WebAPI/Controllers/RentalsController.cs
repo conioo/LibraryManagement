@@ -20,24 +20,13 @@ namespace WebAPI.Controllers
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public class RentalsController : ControllerBase
     {
-        private readonly IRentalService _service;
         private readonly ApplicationSettings _applicationSettings;
+        private readonly IRentalService _service;
 
         public RentalsController(IRentalService service, IOptions<ApplicationSettings> options)
         {
             _service = service;
             _applicationSettings = options.Value;
-        }
-
-        [HttpGet(Rentals.GetRentalById)]
-        [SwaggerOperation(Summary = "Return rental by id")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetRentalByIdAsync([FromQuery] string id)
-        {
-            var rental = await _service.GetRentalById(id);
-
-            return Ok(rental);
         }
 
         [HttpPost(Rentals.AddRental)]
@@ -62,6 +51,29 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> AddRentalsAsync([FromBody] ICollection<RentalRequest> requests, [FromQuery] string profileLibraryCardNumber)
         {
             await _service.AddRentalsAsync(requests, profileLibraryCardNumber);
+
+            return Ok();
+        }
+
+        [HttpGet(Rentals.GetRentalById)]
+        [SwaggerOperation(Summary = "Return rental by id")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetRentalByIdAsync([FromQuery] string id)
+        {
+            var rental = await _service.GetRentalById(id);
+
+            return Ok(rental);
+        }
+
+        [HttpPatch(Rentals.PayThePenalty)]
+        [SwaggerOperation(Summary = "Pays the penalty, after successful payment returns")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> PayThePenaltyAsync([FromQuery] string id)
+        {
+            await _service.PayThePenaltyAsync(id);
 
             return Ok();
         }
@@ -96,7 +108,12 @@ namespace WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ReturnAsync([FromQuery] string id)
         {
-            await _service.ReturnAsync(id);
+            var noNeedToPay = await _service.ReturnAsync(id);
+
+            if (noNeedToPay is false)
+            {
+                HttpContext.Response.Headers.Add("payment-required", $"{id}");
+            }
 
             return Ok();
         }
@@ -107,7 +124,12 @@ namespace WebAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ReturnsAsync([FromBody] IEnumerable<string> ids)
         {
-            await _service.ReturnsAsync(ids);
+            var idsToBePaid = await _service.ReturnsAsync(ids);
+
+            if (idsToBePaid != string.Empty)
+            {
+                HttpContext.Response.Headers.Add("payment-required", $"{idsToBePaid}");
+            }
 
             return Ok();
         }
