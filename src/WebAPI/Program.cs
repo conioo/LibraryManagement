@@ -10,6 +10,7 @@ using WebAPI.Extensions;
 using WebAPI.Installers.Extensions;
 using WebAPI.Middleware;
 
+//usunas
 public sealed class DateOnlyJsonConverter : JsonConverter<DateOnly>
 {
     public override DateOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

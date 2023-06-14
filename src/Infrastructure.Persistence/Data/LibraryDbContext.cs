@@ -21,7 +21,7 @@ namespace Infrastructure.Persistence.Data
         public DbSet<ProfileHistory> ProfilesHistories { get; set; }
         public DbSet<ArchivalRental> ArchivalRentals { get; set; }
         public DbSet<ArchivalReservation> ArchivalReservations { get; set; }
-
+        
         public LibraryDbContext()
         {
 

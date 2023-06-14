@@ -995,7 +995,7 @@ namespace WebAPITests.Integration
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.IsAny<string>(), It.IsAny<DateOnly>()), Times.Never);
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()), Times.Never);
         }
 
         [Fact]
@@ -1025,7 +1025,7 @@ namespace WebAPITests.Integration
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.IsAny<string>(), It.IsAny<DateOnly>()), Times.Never);
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()), Times.Never);
         }
 
         [Fact]
@@ -1059,7 +1059,7 @@ namespace WebAPITests.Integration
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(60))), Times.Once);
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(60)), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(90))), Times.Once);
         }
 
         [Fact]
@@ -1087,7 +1087,7 @@ namespace WebAPITests.Integration
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
-            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(30))), Times.Once);
+            countingOfPenaltyChangesMock.Verify(service => service.RenewalRental(It.Is<string>(id => id == _rentals.First().Id), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(30)), It.Is<DateOnly>(dateOnly => dateOnly == renewalRental.BeginDate.AddDays(60))), Times.Once);
         }
 
         [Fact]

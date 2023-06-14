@@ -2,9 +2,9 @@
 {
     public class RentalSettings
     {
-        public int TimeInDays { get; set; }
-        public decimal PenaltyChargePerDay { get; set; }
-        public int MaxRentalsForUser { get; set; }
-        public int MaxNumberOfRenewals { get; set; }
+        public virtual int TimeInDays { get; set; }
+        public virtual decimal PenaltyChargePerDay { get; set; }
+        public virtual int MaxRentalsForUser { get; set; }
+        public virtual int MaxNumberOfRenewals { get; set; }
     }
 }

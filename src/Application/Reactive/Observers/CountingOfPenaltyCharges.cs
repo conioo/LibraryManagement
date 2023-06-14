@@ -1,5 +1,4 @@
 ﻿using Application.Dtos;
-using Application.Exceptions;
 using Application.Interfaces;
 using Application.Reactive.Interfaces;
 using Domain.Entities;
@@ -9,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly: InternalsVisibleTo("WebAPITests")]
 
 namespace Application.Reactive.Observers
 {
@@ -18,9 +21,8 @@ namespace Application.Reactive.Observers
         private readonly ILogger<CountingOfPenaltyCharges> _logger;
         private readonly RentalSettings _rentalOptions;
         private readonly IEmailService _emailService;
-        private IDictionary<DateOnly, List<string>> _rentalIds = new Dictionary<DateOnly, List<string>>();
-
-        private IList<Rental> _overdueRentals = new List<Rental>();
+        private IDictionary<DateOnly, List<string>> _rentalsId = new Dictionary<DateOnly, List<string>>();
+        private IList<Rental> _notReturnedOnTime = new List<Rental>();
         public CountingOfPenaltyCharges(IServiceProvider serviceProvider, ILogger<CountingOfPenaltyCharges> logger, IOptions<RentalSettings> options, IEmailService emailService)
         {
             _serviceProvider = serviceProvider;
@@ -29,28 +31,29 @@ namespace Application.Reactive.Observers
             _emailService = emailService;
         }
 
-        public void RemoveOverdueRental(Rental rental)
-        {
-            var result = _overdueRentals.Remove(rental);
-
-            if (result is false)
-            {
-                throw new NotFoundException();
-            }
-        }
-
         public void AddRental(Rental rental)
         {
-            var endOfRentalDate = rental.EndDate;
-
-            if (_rentalIds.ContainsKey(endOfRentalDate))
+            AddRental(rental.Id, rental.EndDate);
+        }
+        private void AddRental(string rentalId, DateOnly endDate)
+        {
+            if (_rentalsId.ContainsKey(endDate))
             {
-                _rentalIds[endOfRentalDate].Add(rental.Id);
+                _rentalsId[endDate].Add(rentalId);
             }
             else
             {
-                _rentalIds.Add(endOfRentalDate, new List<string>() { rental.Id });
+                _rentalsId.Add(endDate, new List<string>() { rentalId });
             }
+        }
+        protected virtual TService GetService<TService>(IServiceProvider provider) where TService : class
+        {
+            return provider.GetRequiredService<TService>();
+        }
+
+        protected virtual IServiceScope CreateScope(IServiceProvider serviceProvider)
+        {
+            return serviceProvider.CreateScope();
         }
 
         public void OnCompleted()
@@ -65,65 +68,96 @@ namespace Application.Reactive.Observers
 
         public void OnNext(DateTimeOffset value)
         {
-            var date = DateOnly.FromDateTime(value.DateTime).AddDays(-1);
+            var date = DateOnly.FromDateTime(value.DateTime);
 
-            if (!_rentalIds.ContainsKey(date))
+            using (var scope = CreateScope(_serviceProvider))
             {
-                return;
-            }
+                var unitOfWork = GetService<IUnitOfWork>(scope.ServiceProvider);
 
-            var rentalIds = _rentalIds[date];
-            Rental? rental;
-            int numberAdded = 0;
-            //httpcontextaccesor
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
-
-                foreach (var id in rentalIds)
+                if (_rentalsId.ContainsKey(date))
                 {
-                    rental = unitOfWork.Set<Rental>().Find(id);
+                    var rentalIds = _rentalsId[date];
+                    Rental? rental;
+                    int numberAdded = 0;
 
-                    if (rental is null)
+                    var userService = GetService<IUserService>(scope.ServiceProvider);
+
+                    foreach (var id in rentalIds)
                     {
-                        _logger.LogInformation($"Rental with id: {id} not found");
-                        break;
+                        rental = unitOfWork.Set<Rental>().Include(rental => rental.Profile).FirstOrDefault(rental => rental.Id == id);
+
+                        if (rental is null)
+                        {
+                            _logger.LogInformation($"Rental with id: {id} not found");
+                            break;
+                        }
+
+                        _emailService.SendAsync(new Email(userService.GetEmail(rental.Profile.UserId).Result, "Starting counting of penalty charges", "please pay"));
+
+                        rental.PenaltyCharge = 0;
+                        _notReturnedOnTime.Add(rental);
+
+                        ++numberAdded;
                     }
 
-                    //if (rental.IsReturned is false)
+                    _logger.LogInformation($"Starting counting {numberAdded} penalty charges");
 
-                    rental = unitOfWork.Set<Rental>().Include(rental => rental.Profile).Single(rental => rental.Id == id);
-
-                    _emailService.SendAsync(new Email(userService.GetEmail(rental.Profile.UserId).Result, "Starting counting of penalty charges", "please pay"));
-
-                    _overdueRentals.Add(rental);
-                    ++numberAdded;
-
+                    _rentalsId.Remove(date);
                 }
 
-                _logger.LogInformation($"Starting counting {numberAdded} penalty charges");
-
-                _rentalIds.Remove(date);
-
-                foreach (var overdueRental in _overdueRentals)
+                foreach (var overdueRental in _notReturnedOnTime)
                 {
-                    //overdueRental.PenaltyCharge += _rentalOptions.PenaltyChargePerDay;
+                    overdueRental.PenaltyCharge += _rentalOptions.PenaltyChargePerDay;
                 }
 
-                unitOfWork.Set<Rental>().UpdateRange(_overdueRentals);
+                unitOfWork.Set<Rental>().UpdateRange(_notReturnedOnTime);
                 unitOfWork.SaveChangesAsync().Wait();
             }
         }
 
-        public bool RenewalRental(string rentalId, DateOnly endDate)
+        public bool RenewalRental(string rentalId, DateOnly oldEndDate, DateOnly newEndDate)
         {
-            return _rentalIds[endDate].Remove(rentalId);
+            if(_rentalsId.ContainsKey(oldEndDate) is false)
+            {
+                return false;
+            }
+
+            var found = _rentalsId[oldEndDate].Remove(rentalId);
+
+            if (found is false)
+            {
+                return false;
+            }
+
+            AddRental(rentalId, newEndDate);
+
+            return true;
         }
 
-        public void ReturnOfItem(Rental rental)
+        public bool ReturnOfItem(Rental rental)
         {
-            throw new NotImplementedException();
+            var endDate = rental.EndDate;
+
+            if(_rentalsId.ContainsKey(endDate) is true)
+            {
+                var removedId = _rentalsId[endDate].Remove(rental.Id);
+
+                if (removedId is true)
+                {
+                    return true;
+                }
+            }
+
+            var toBeDeleted = _notReturnedOnTime.FirstOrDefault(obj => obj.Id == rental.Id);
+
+            if(toBeDeleted is null)
+            {
+                return false;
+            }
+
+            _notReturnedOnTime.Remove(toBeDeleted);
+
+            return true;
         }
     }
 }

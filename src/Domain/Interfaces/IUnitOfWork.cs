@@ -1,5 +1,6 @@
 ﻿using Domain.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Domain.Interfaces
@@ -10,5 +11,6 @@ namespace Domain.Interfaces
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         public int SaveChanges();
         public DatabaseFacade Database { get; }
+        public ChangeTracker ChangeTracker { get; }
     }
 }

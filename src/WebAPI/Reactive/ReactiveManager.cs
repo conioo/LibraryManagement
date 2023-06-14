@@ -15,7 +15,7 @@ namespace WebAPI.Reactive
 
                 //var startTime = DateTimeOffset.Now.AddSeconds(5);
                 var startTime = new DateTimeOffset(DateTime.Today.Ticks, userTimeZone.GetUtcOffset(DateTime.Today));
-
+                
                 if (startTime < DateTimeOffset.Now)
                 {
                     startTime = startTime.AddDays(1.0);

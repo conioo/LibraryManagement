@@ -260,9 +260,11 @@ namespace Application.Services
                 throw new BadRequestException("Maximum number of renewal has already been used");
             }
 
-            _countingOfPenaltyCharges.RenewalRental(id, rentalToRenew.EndDate);
+            var newEndDate = rentalToRenew.EndDate.AddDays(_rentalSettings.TimeInDays);
 
-            rentalToRenew.EndDate = rentalToRenew.EndDate.AddDays(_rentalSettings.TimeInDays);
+            _countingOfPenaltyCharges.RenewalRental(id, rentalToRenew.EndDate, newEndDate);
+
+            rentalToRenew.EndDate = newEndDate;
             rentalToRenew.NumberOfRenewals++;
 
             _unitOfWork.Set<Rental>().Update(rentalToRenew);
