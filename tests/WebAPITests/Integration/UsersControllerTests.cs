@@ -1,6 +1,7 @@
 ﻿using Application.Dtos.Identity.Response;
 using Application.Dtos.Response;
 using CommonContext;
+using Domain.Entities;
 using FluentAssertions;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -181,6 +182,8 @@ namespace WebAPITests.Integration
 
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             _sharedContext.IdentityDbContext.Users.Count().Should().Be(4);
+
+            _sharedContext.DbContext.Set<Profile>().Find(_sharedContext.DefaultProfile.LibraryCardNumber).Should().NotBeNull();
         }
 
         [Fact]
@@ -189,14 +192,18 @@ namespace WebAPITests.Integration
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Delete,
-                RequestUri = new Uri(_client.BaseAddress + Users.RemoveUser + $"?id={_users.First().Id}"),
+                RequestUri = new Uri(_client.BaseAddress + Users.RemoveUser + $"?id={_defaultUser.Id}"),
             };
 
             var response = await _client.SendAsync(request);
 
+            _sharedContext.RefreshDb();
+
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             _sharedContext.IdentityDbContext.Users.Count().Should().Be(3);
-            _sharedContext.IdentityDbContext.Users.Should().NotContain(user => user.Id == _users.First().Id);
+            _sharedContext.IdentityDbContext.Users.Should().NotContain(user => user.Id == _defaultUser.Id);
+
+            _sharedContext.DbContext.Set<Profile>().Find(_sharedContext.DefaultProfile.LibraryCardNumber).Should().BeNull();
         }
 
         [Fact]

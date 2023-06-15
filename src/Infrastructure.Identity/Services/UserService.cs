@@ -4,24 +4,29 @@ using Application.Dtos.Request;
 using Application.Exceptions;
 using Application.Interfaces;
 using AutoMapper;
+using Domain.Interfaces;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sieve.Services;
 using System.Data;
 using System.Security.Claims;
+using Profile = Domain.Entities.Profile;
 
 namespace Application.Services
 {
     internal class UserService : IdentityCommonService<ApplicationUser, RegisterRequest, UserResponse>, IUserService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<RoleService> logger, IUserResolverService userResolverService, UserManager<ApplicationUser> userManager) : base(identityContext, mapper, sieveProcessor, userResolverService, logger)
+        public UserService(IdentityContext identityContext, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<RoleService> logger, IUserResolverService userResolverService, UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork) : base(identityContext, mapper, sieveProcessor, userResolverService, logger)
         {
             _userManager = userManager;
+            _unitOfWork = unitOfWork;
         }
 
         public override async Task RemoveAsync(string id)
@@ -40,7 +45,13 @@ namespace Application.Services
                 throw new IdentityException(result.Errors);
             }
 
-            _logger.LogInformation($"{_userResolverService.GetUserName} removed user: {id}");
+            if(user.ProfileCardNumber is not null)
+            {
+                _unitOfWork.Set<Profile>().Remove(new Profile() { LibraryCardNumber =  user.ProfileCardNumber });
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            _logger.LogInformation($"{_userResolverService.GetUserName} removed user: {id} and profile if it had");
         }
 
         public async Task<UserResponse> GetUserAsync(ClaimsPrincipal principal)
