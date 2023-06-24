@@ -304,8 +304,8 @@ namespace WebAPITests.Integration
 
             if(_options.removeRentalsAndReservationsForTheProfile)
             {
-                profile.CurrrentRentals = null;
-                profile.CurrrentReservations = null;
+                profile.CurrentRentals = null;
+                profile.CurrentReservations = null;
 
                 profile.ProfileHistory.ArchivalRentals = null;
                 profile.ProfileHistory.ArchivalReservations = null;

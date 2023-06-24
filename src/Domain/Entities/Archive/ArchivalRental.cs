@@ -11,9 +11,7 @@ namespace Domain.Entities
         public DateOnly ReturnedDate { get; set; }
         public decimal? PenaltyCharge { get; set; }
         public int NumberOfRenewals { get; set; }
-        public virtual Profile? Profile { get; set; }
-        //public virtual ProfileHistory? ProfileHistory { get; set; }//zbyteczne?
-        public virtual Copy? Copy { get; set; }
-        //public virtual CopyHistory? CopyHistory { get; set; }
+        public virtual ProfileHistory ProfileHistory { get; set; }
+        public virtual CopyHistory CopyHistory { get; set; }
     }
 }

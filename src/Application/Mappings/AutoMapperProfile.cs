@@ -2,6 +2,7 @@
 using Application.Dtos.Response;
 using Application.Dtos.Response.Archive;
 using Application.Mappings.AutoMapperHelpers;
+using AutoMapper;
 using Domain.Entities;
 using Profile = Domain.Entities.Profile;
 
@@ -11,12 +12,16 @@ namespace Application.Mappings
     {
         public AutoMapperProfile()
         {
-            CreateMap<ItemRequest, Item>();
+            CreateMap<ItemRequest, Item>()
+                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<LibraryRequest, Library>()
+                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
             CreateMap<ItemRequest, ItemResponse>();
             CreateMap<Item, ItemResponse>();
 
             CreateMap<Library, LibraryResponse>();
-            CreateMap<LibraryRequest, Library>();
 
             CreateMap<Rental, RentalResponse>()
                .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy.Item.Title));
@@ -28,20 +33,26 @@ namespace Application.Mappings
                 .ForMember(dest => dest.ProfileHistory, conf => conf.ExplicitExpansion());
 
             CreateMap<ArchivalRental, ArchivalRentalResponse>()
-               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
+               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.CopyHistory.Copy.Item.Title))
+               .ForMember(dest => dest.ProfileLibraryCardNumber, conf => conf.MapFrom(src => src.ProfileHistory.Profile.LibraryCardNumber))
+               .ForMember(dest => dest.CopyInventoryNumber, conf => conf.MapFrom(src => src.CopyHistory.Copy.InventoryNumber));
 
             CreateMap<Rental, ArchivalRental>();
 
             CreateMap<ArchivalReservation, ArchivalReservationResponse>()
-               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.Copy != null ? src.Copy.Item.Title : null));
+               .ForMember(dest => dest.ItemTitle, conf => conf.MapFrom(src => src.CopyHistory.Copy.Item.Title))
+               .ForMember(dest => dest.ProfileLibraryCardNumber, conf => conf.MapFrom(src => src.ProfileHistory.Profile.LibraryCardNumber))
+               .ForMember(dest => dest.CopyInventoryNumber, conf => conf.MapFrom(src => src.CopyHistory.Copy.InventoryNumber));
 
             CreateMap<ProfileHistory, ProfileHistoryResponse>();
-            CreateMap<CopyHistory, CopyHistoryResponse>();
+            CreateMap<CopyHistory, CopyHistoryResponse>();//tutaj
 
             CreateMap<Copy, CopyResponse>();
 
             CreateMap<Item, CopiesHelper>();
-        }
 
+            CreateMap<int?, int>().ConvertUsing((src, dest) => src ?? dest);
+            CreateMap<bool?, bool>().ConvertUsing((src, dest) => src ?? dest);
+        }
     }
 }

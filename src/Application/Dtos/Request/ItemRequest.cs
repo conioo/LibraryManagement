@@ -1,11 +1,9 @@
-﻿#pragma warning disable CS8618 
-
-namespace Application.Dtos.Request
+﻿namespace Application.Dtos.Request
 {
     public class ItemRequest
     {
-        public string Title { get; set; }
-        public Form FormOfPublication { get; set; }
+        public string? Title { get; set; }
+        public Form? FormOfPublication { get; set; }
         public string? Authors { get; set; }
         public string? Description { get; set; }
         public string? Publisher { get; set; }

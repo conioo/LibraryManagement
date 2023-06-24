@@ -7,6 +7,7 @@ using MailKit;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using Sieve.Services;
+using AutoMapper.Internal;
 
 namespace Application
 {

@@ -514,7 +514,7 @@ namespace Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Rental", b =>
                 {
                     b.HasOne("Domain.Entities.Profile", "Profile")
-                        .WithMany("CurrrentRentals")
+                        .WithMany("CurrentRentals")
                         .HasForeignKey("ProfileLibraryCardNumber")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -547,7 +547,7 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
-                    b.Navigation("CurrrentRentals");
+                    b.Navigation("CurrentRentals");
 
                     b.Navigation("CurrrentReservations");
                 });

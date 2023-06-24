@@ -301,7 +301,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task GetCurrentRentalsAsync_ForEmptyCurrentRentals_ReturnsEmptyCollection()
         {
-            _profile.CurrrentRentals = null;
+            _profile.CurrentRentals = null;
 
             await _sharedContext.DbContext.SaveChangesAsync();
 
@@ -349,15 +349,15 @@ namespace WebAPITests.Integration
 
             var responseRentals = await response.Content.ReadFromJsonAsync<ICollection<RentalResponse>>();
 
-            responseRentals.Should().BeEquivalentTo(_profile.CurrrentRentals, options => options.ExcludingMissingMembers());
+            responseRentals.Should().BeEquivalentTo(_profile.CurrentRentals, options => options.ExcludingMissingMembers());
 
-            responseRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentRentals.First().Copy.Item.Title);
+            responseRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentRentals.First().Copy.Item.Title);
         }
 
         [Fact]
         async Task GetCurrentReservationsAsync_ForEmptyCurrentRentals_ReturnsEmptyCollection()
         {
-            _profile.CurrrentReservations = null;
+            _profile.CurrentReservations = null;
 
             await _sharedContext.DbContext.SaveChangesAsync();
 
@@ -405,9 +405,9 @@ namespace WebAPITests.Integration
 
             var responseReservations = await response.Content.ReadFromJsonAsync<ICollection<ReservationResponse>>();
 
-            responseReservations.Should().BeEquivalentTo(_profile.CurrrentReservations, options => options.ExcludingMissingMembers());
+            responseReservations.Should().BeEquivalentTo(_profile.CurrentReservations, options => options.ExcludingMissingMembers());
 
-            responseReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentReservations.First().Copy.Item.Title);
+            responseReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentReservations.First().Copy.Item.Title);
         }
 
         [Fact]
@@ -446,8 +446,8 @@ namespace WebAPITests.Integration
                 return options;
             });
 
-            responseHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().Copy.Item.Title);
-            responseHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().Copy.Item.Title);
+            responseHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().CopyHistory.Copy.Item.Title);
+            responseHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().CopyHistory.Copy.Item.Title);
         }
 
         [Fact]
@@ -473,8 +473,8 @@ namespace WebAPITests.Integration
 
             responseProfile.ProfileHistory.Should().BeNull();
 
-            responseProfile.CurrrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentRentals.First().Copy.Item.Title);
-            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentReservations.First().Copy.Item.Title);
+            responseProfile.CurrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentRentals.First().Copy.Item.Title);
+            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentReservations.First().Copy.Item.Title);
         }
 
         [Fact]
@@ -531,8 +531,8 @@ namespace WebAPITests.Integration
 
             responseProfile.ProfileHistory.Should().BeNull();
 
-            responseProfile.CurrrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentRentals.First().Copy.Item.Title);
-            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentReservations.First().Copy.Item.Title);
+            responseProfile.CurrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentRentals.First().Copy.Item.Title);
+            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentReservations.First().Copy.Item.Title);
         }
 
         [Fact]
@@ -555,11 +555,11 @@ namespace WebAPITests.Integration
                 .ExcludingMissingMembers()
             );
 
-            responseProfile.CurrrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentRentals.First().Copy.Item.Title);
-            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentReservations.First().Copy.Item.Title);
+            responseProfile.CurrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentRentals.First().Copy.Item.Title);
+            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentReservations.First().Copy.Item.Title);
 
-            responseProfile.ProfileHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().Copy.Item.Title);
-            responseProfile.ProfileHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().Copy.Item.Title);
+            responseProfile.ProfileHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().CopyHistory.Copy.Item.Title);
+            responseProfile.ProfileHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().CopyHistory.Copy.Item.Title);
         }
 
         [Fact]
@@ -613,11 +613,11 @@ namespace WebAPITests.Integration
                 .ExcludingMissingMembers()
             );
 
-            responseProfile.CurrrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentRentals.First().Copy.Item.Title);
-            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrrentReservations.First().Copy.Item.Title);
+            responseProfile.CurrentRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentRentals.First().Copy.Item.Title);
+            responseProfile.CurrrentReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.CurrentReservations.First().Copy.Item.Title);
 
-            responseProfile.ProfileHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().Copy.Item.Title);
-            responseProfile.ProfileHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().Copy.Item.Title);
+            responseProfile.ProfileHistory.ArchivalRentals.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalRentals.First().CopyHistory.Copy.Item.Title);
+            responseProfile.ProfileHistory.ArchivalReservations.First().ItemTitle.Should().NotBeNull().And.Be(_profile.ProfileHistory.ArchivalReservations.First().CopyHistory.Copy.Item.Title);
         }
 
         public void Dispose()

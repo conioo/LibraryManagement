@@ -37,7 +37,7 @@ namespace WebAPITests.Integration
             _defaultProfile = _sharedContext.DefaultProfile;
 
             _copy = DataGenerator.Get<Copy>(1).First();
-            _copy.CopyHistory = null;
+            _copy.CopyHistory.Clear();
 
             var copy2 = DataGenerator.Get<Copy>(1).First();
             var copy3 = DataGenerator.Get<Copy>(1).First();
@@ -48,8 +48,8 @@ namespace WebAPITests.Integration
             copy3.CopyHistory.Clear();
 
             _rentalProfile = DataGenerator.Get<Profile>(1).First();
-            _rentalProfile.CurrrentRentals = null;
-            _rentalProfile.CurrrentReservations = null;
+            _rentalProfile.CurrentRentals = null;
+            _rentalProfile.CurrentReservations = null;
             _rentalProfile.ProfileHistory.Clear();
 
             _rentals = DataGenerator.Get<Rental>(2);
@@ -96,11 +96,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                   .Include(rProfile => rProfile.CurrrentRentals)
+                   .Include(rProfile => rProfile.CurrentRentals)
                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                    .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+            refreshProfile.CurrentRentals.Should().BeNullOrEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -132,11 +132,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+            refreshProfile.CurrentRentals.Should().BeNullOrEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -168,11 +168,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+            refreshProfile.CurrentRentals.Should().BeNullOrEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -211,7 +211,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRentalAsync_ForMaxRentals_Returns400BadRequest()
         {
-            _defaultProfile.CurrrentRentals = (ICollection<Rental>)DataGenerator.Get<Rental>(5);
+            _defaultProfile.CurrentRentals = (ICollection<Rental>)DataGenerator.Get<Rental>(5);
 
             _sharedContext.DbContext.Set<Profile>().Update(_defaultProfile);
             await _sharedContext.DbContext.SaveChangesAsync();
@@ -238,11 +238,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(7);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                   .Include(rProfile => rProfile.CurrrentRentals)
+                   .Include(rProfile => rProfile.CurrentRentals)
                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                    .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Count().Should().Be(5);
+            refreshProfile.CurrentRentals.Count().Should().Be(5);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -279,11 +279,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+            refreshProfile.CurrentRentals.Should().BeNullOrEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -336,12 +336,12 @@ namespace WebAPITests.Integration
             responseRental.Should().BeEquivalentTo(newRental, options => options.ExcludingMissingMembers());
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().NotBeNullOrEmpty();
-            refreshProfile.CurrrentRentals.First().Id.Should().Be(newRental.Id);
+            refreshProfile.CurrentRentals.Should().NotBeNullOrEmpty();
+            refreshProfile.CurrentRentals.First().Id.Should().Be(newRental.Id);
 
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -379,11 +379,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                   .Include(rProfile => rProfile.CurrrentRentals)
+                   .Include(rProfile => rProfile.CurrentRentals)
                    .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                    .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeNullOrEmpty();
+            refreshProfile.CurrentRentals.Should().BeNullOrEmpty();
 
             var copy1 = await _sharedContext.DbContext.Set<Copy>().FindAsync(_copy.InventoryNumber);
 
@@ -420,11 +420,11 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -495,7 +495,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(7);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -511,8 +511,8 @@ namespace WebAPITests.Integration
             copy4.IsAvailable.Should().BeFalse();
             copy5.IsAvailable.Should().BeFalse();
 
-            refreshProfile.CurrrentRentals.Should().NotBeNullOrEmpty();
-            refreshProfile.CurrrentRentals.Count.Should().Be(5);
+            refreshProfile.CurrentRentals.Should().NotBeNullOrEmpty();
+            refreshProfile.CurrentRentals.Count.Should().Be(5);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -550,7 +550,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -558,7 +558,7 @@ namespace WebAPITests.Integration
 
             copy1.IsAvailable.Should().BeTrue();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -592,7 +592,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -600,7 +600,7 @@ namespace WebAPITests.Integration
 
             copy1.IsAvailable.Should().BeTrue();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -634,7 +634,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -642,7 +642,7 @@ namespace WebAPITests.Integration
 
             copy1.IsAvailable.Should().BeTrue();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -681,7 +681,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -691,7 +691,7 @@ namespace WebAPITests.Integration
             copy1.IsAvailable.Should().BeTrue();
             copy2.IsAvailable.Should().BeFalse();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -732,7 +732,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(2);
 
             var refreshProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -748,7 +748,7 @@ namespace WebAPITests.Integration
             copy4.IsAvailable.Should().BeTrue();
             copy5.IsAvailable.Should().BeTrue();
 
-            refreshProfile.CurrrentRentals.Should().BeEmpty();
+            refreshProfile.CurrentRentals.Should().BeEmpty();
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -782,7 +782,7 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Rental>().Count().Should().Be(4);
 
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
-                    .Include(rProfile => rProfile.CurrrentRentals)
+                    .Include(rProfile => rProfile.CurrentRentals)
                     .Where(rProfile => rProfile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)
                     .FirstOrDefaultAsync();
 
@@ -792,8 +792,8 @@ namespace WebAPITests.Integration
             copy1.IsAvailable.Should().BeFalse();
             copy2.IsAvailable.Should().BeFalse();
 
-            refreshedProfile.CurrrentRentals.Should().NotBeNullOrEmpty();
-            refreshedProfile.CurrrentRentals.Count.Should().Be(2);
+            refreshedProfile.CurrentRentals.Should().NotBeNullOrEmpty();
+            refreshedProfile.CurrentRentals.Count.Should().Be(2);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
@@ -903,11 +903,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(1);
+            refreshedProfile.CurrentRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.First().Id.Should().Be(_rentals.First().Id);
 
@@ -918,8 +918,8 @@ namespace WebAPITests.Integration
             archivalRental.EndDate.Should().Be(_rentals.First().EndDate);
             archivalRental.PenaltyCharge.Should().Be(_rentals.First().PenaltyCharge);
             archivalRental.NumberOfRenewals.Should().Be(_rentals.First().NumberOfRenewals);
-            archivalRental.Profile.LibraryCardNumber.Should().Be(_rentals.First().Profile.LibraryCardNumber);
-            archivalRental.Copy.InventoryNumber.Should().Be(_rentals.First().Copy.InventoryNumber);
+            archivalRental.ProfileHistory.Profile.LibraryCardNumber.Should().Be(_rentals.First().Profile.LibraryCardNumber);
+            archivalRental.CopyHistory.Copy.InventoryNumber.Should().Be(_rentals.First().Copy.InventoryNumber);
             archivalRental.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1124,11 +1124,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.CurrentRentals.Count().Should().Be(2);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1170,11 +1170,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(1);
+            refreshedProfile.CurrentRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.First().Id.Should().Be(_rentals.First().Id);
 
@@ -1185,8 +1185,8 @@ namespace WebAPITests.Integration
             archivalRental.EndDate.Should().Be(_rentals.First().EndDate);
             archivalRental.PenaltyCharge.Should().Be(_rentals.First().PenaltyCharge);
             archivalRental.NumberOfRenewals.Should().Be(_rentals.First().NumberOfRenewals);
-            archivalRental.Profile.LibraryCardNumber.Should().Be(_rentals.First().Profile.LibraryCardNumber);
-            archivalRental.Copy.InventoryNumber.Should().Be(_rentals.First().Copy.InventoryNumber);
+            archivalRental.ProfileHistory.Profile.LibraryCardNumber.Should().Be(_rentals.First().Profile.LibraryCardNumber);
+            archivalRental.CopyHistory.Copy.InventoryNumber.Should().Be(_rentals.First().Copy.InventoryNumber);
             archivalRental.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1236,11 +1236,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.CurrentRentals.Count().Should().Be(2);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1322,11 +1322,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.CurrentRentals.Count().Should().Be(2);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1398,11 +1398,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(1);
+            refreshedProfile.CurrentRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(1);
             refreshedProfile.ProfileHistory.ArchivalRentals.ElementAt(0).Id.Should().Be(_rentals.ElementAt(1).Id);
 
@@ -1412,8 +1412,8 @@ namespace WebAPITests.Integration
             archivalRental1.EndDate.Should().Be(_rentals.ElementAt(1).EndDate);
             archivalRental1.PenaltyCharge.Should().Be(_rentals.ElementAt(1).PenaltyCharge);
             archivalRental1.NumberOfRenewals.Should().Be(_rentals.ElementAt(1).NumberOfRenewals);
-            archivalRental1.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(1).Profile.LibraryCardNumber);
-            archivalRental1.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(1).Copy.InventoryNumber);
+            archivalRental1.ProfileHistory.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(1).Profile.LibraryCardNumber);
+            archivalRental1.CopyHistory.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(1).Copy.InventoryNumber);
             archivalRental1.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1452,11 +1452,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(2);
+            refreshedProfile.CurrentRentals.Count().Should().Be(2);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(0);
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
@@ -1519,11 +1519,11 @@ namespace WebAPITests.Integration
             var refreshedProfile = await _sharedContext.DbContext.Set<Profile>()
                      .Include(profile => profile.ProfileHistory)
                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                     .Include(profile => profile.CurrrentRentals)
+                     .Include(profile => profile.CurrentRentals)
                      .Where(rProfile => rProfile.LibraryCardNumber == _rentalProfile.LibraryCardNumber)
                      .FirstOrDefaultAsync();
 
-            refreshedProfile.CurrrentRentals.Count().Should().Be(0);
+            refreshedProfile.CurrentRentals.Count().Should().Be(0);
             refreshedProfile.ProfileHistory.ArchivalRentals.Count().Should().Be(2);
             refreshedProfile.ProfileHistory.ArchivalRentals.ElementAt(0).Id.Should().Be(_rentals.ElementAt(0).Id);
             refreshedProfile.ProfileHistory.ArchivalRentals.ElementAt(1).Id.Should().Be(_rentals.ElementAt(1).Id);
@@ -1535,8 +1535,8 @@ namespace WebAPITests.Integration
             archivalRental0.EndDate.Should().Be(_rentals.ElementAt(0).EndDate);
             archivalRental0.PenaltyCharge.Should().Be(_rentals.ElementAt(0).PenaltyCharge);
             archivalRental0.NumberOfRenewals.Should().Be(_rentals.ElementAt(0).NumberOfRenewals);
-            archivalRental0.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(0).Profile.LibraryCardNumber);
-            archivalRental0.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(0).Copy.InventoryNumber);
+            archivalRental0.ProfileHistory.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(0).Profile.LibraryCardNumber);
+            archivalRental0.CopyHistory.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(0).Copy.InventoryNumber);
             archivalRental0.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
 
             var archivalRental1 = await _sharedContext.DbContext.Set<ArchivalRental>().FindAsync(_rentals.ElementAt(1).Id);
@@ -1545,8 +1545,8 @@ namespace WebAPITests.Integration
             archivalRental1.EndDate.Should().Be(_rentals.ElementAt(1).EndDate);
             archivalRental1.PenaltyCharge.Should().Be(_rentals.ElementAt(1).PenaltyCharge);
             archivalRental1.NumberOfRenewals.Should().Be(_rentals.ElementAt(1).NumberOfRenewals);
-            archivalRental1.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(1).Profile.LibraryCardNumber);
-            archivalRental1.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(1).Copy.InventoryNumber);
+            archivalRental0.ProfileHistory.Profile.LibraryCardNumber.Should().Be(_rentals.ElementAt(1).Profile.LibraryCardNumber);
+            archivalRental1.CopyHistory.Copy.InventoryNumber.Should().Be(_rentals.ElementAt(1).Copy.InventoryNumber);
             archivalRental1.ReturnedDate.Should().Be(DateOnly.FromDateTime(DateTime.Now));
 
             var countingOfPenaltyChangesMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();

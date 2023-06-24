@@ -363,7 +363,7 @@ namespace Infrastructure.Persistence.Migrations
                         .HasForeignKey("HistoryId");
 
                     b.HasOne("Domain.Entities.Profile", "Profile")
-                        .WithMany("CurrrentRentals")
+                        .WithMany("CurrentRentals")
                         .HasForeignKey("ProfileLibraryCardNumber");
 
                     b.Navigation("History");
@@ -400,7 +400,7 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
-                    b.Navigation("CurrrentRentals");
+                    b.Navigation("CurrentRentals");
 
                     b.Navigation("CurrrentReservations");
                 });

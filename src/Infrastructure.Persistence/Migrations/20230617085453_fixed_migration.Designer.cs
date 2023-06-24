@@ -12,17 +12,18 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20230426191102_modify_archive")]
-    partial class modify_archive
+    [Migration("20230617085453_fixed_migration")]
+    partial class fixed_migration
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.15")
+                .HasAnnotation("ProductVersion", "7.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Domain.Entities.ArchivalRental", b =>
                 {
@@ -30,8 +31,8 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("BeginDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("BeginDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("CopyHistoryId")
                         .HasColumnType("nvarchar(450)");
@@ -45,14 +46,17 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfRenewals")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("PenaltyCharge")
                         .HasColumnType("decimal(18,2)");
@@ -63,8 +67,8 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("ProfileLibraryCardNumber")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("ReturnedDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("ReturnedDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
@@ -85,11 +89,11 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("BeginDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("BeginDate")
+                        .HasColumnType("date");
 
-                    b.Property<DateTime?>("CollectionDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly?>("CollectionDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("CopyHistoryId")
                         .HasColumnType("nvarchar(450)");
@@ -103,8 +107,8 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("datetime2");
@@ -317,11 +321,16 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ProfileHistoryId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("LibraryCardNumber");
+
+                    b.HasIndex("ProfileHistoryId");
 
                     b.ToTable("Profiles");
                 });
@@ -343,8 +352,8 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("BeginDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("BeginDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
@@ -352,14 +361,17 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfRenewals")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("PenaltyCharge")
                         .HasColumnType("decimal(18,2)");
@@ -381,8 +393,8 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("BeginDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("BeginDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
@@ -390,8 +402,8 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("datetime2");
@@ -412,7 +424,7 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.ArchivalRental", b =>
                 {
-                    b.HasOne("Domain.Entities.CopyHistory", "CopyHistory")
+                    b.HasOne("Domain.Entities.CopyHistory", null)
                         .WithMany("ArchivalRentals")
                         .HasForeignKey("CopyHistoryId");
 
@@ -420,7 +432,7 @@ namespace Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CopyInventoryNumber");
 
-                    b.HasOne("Domain.Entities.ProfileHistory", "ProfileHistory")
+                    b.HasOne("Domain.Entities.ProfileHistory", null)
                         .WithMany("ArchivalRentals")
                         .HasForeignKey("ProfileHistoryId");
 
@@ -430,16 +442,12 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Navigation("Copy");
 
-                    b.Navigation("CopyHistory");
-
                     b.Navigation("Profile");
-
-                    b.Navigation("ProfileHistory");
                 });
 
             modelBuilder.Entity("Domain.Entities.ArchivalReservation", b =>
                 {
-                    b.HasOne("Domain.Entities.CopyHistory", "CopyHistory")
+                    b.HasOne("Domain.Entities.CopyHistory", null)
                         .WithMany("ArchivalReservations")
                         .HasForeignKey("CopyHistoryId");
 
@@ -447,7 +455,7 @@ namespace Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("CopyInventoryNumber");
 
-                    b.HasOne("Domain.Entities.ProfileHistory", "ProfileHistory")
+                    b.HasOne("Domain.Entities.ProfileHistory", null)
                         .WithMany("ArchivalReservations")
                         .HasForeignKey("ProfileHistoryId");
 
@@ -457,11 +465,7 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Navigation("Copy");
 
-                    b.Navigation("CopyHistory");
-
                     b.Navigation("Profile");
-
-                    b.Navigation("ProfileHistory");
                 });
 
             modelBuilder.Entity("Domain.Entities.Copy", b =>
@@ -495,6 +499,15 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Item");
 
                     b.Navigation("Library");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profile", b =>
+                {
+                    b.HasOne("Domain.Entities.ProfileHistory", "ProfileHistory")
+                        .WithMany()
+                        .HasForeignKey("ProfileHistoryId");
+
+                    b.Navigation("ProfileHistory");
                 });
 
             modelBuilder.Entity("Domain.Entities.Rental", b =>

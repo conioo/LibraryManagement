@@ -12,5 +12,7 @@ namespace Domain.Interfaces
         public int SaveChanges();
         public DatabaseFacade Database { get; }
         public ChangeTracker ChangeTracker { get; }
+        public EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
+
     }
 }

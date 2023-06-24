@@ -28,7 +28,7 @@ namespace Application.Services
                  .Select(copiesHelper => copiesHelper.Copies)
                  .FirstOrDefaultAsync();
 
-            if(response is null )
+            if (response is null)
             {
                 throw new NotFoundException();
             }
@@ -44,6 +44,13 @@ namespace Application.Services
                .ProjectTo<CopiesHelper>(_mapper.ConfigurationProvider)
                .Select(copiesHelper => copiesHelper.Copies.Where(copy => copy.IsAvailable == true))
                .FirstOrDefaultAsync();
+
+            //var response = await _unitOfWork.Set<Item>()
+            //       .AsNoTracking()
+            //       .Where(item => item.Id == id)
+            //       .Select(item => item.Copies.Where(copy => copy.IsAvailable == true))
+            //       .ProjectTo<IEnumerable<CopyResponse>>(_mapper.ConfigurationProvider)
+            //       .FirstOrDefaultAsync();
 
             if (response is null)
             {

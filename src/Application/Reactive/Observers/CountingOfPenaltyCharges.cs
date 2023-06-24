@@ -1,4 +1,5 @@
 ﻿using Application.Dtos;
+using Application.Exceptions;
 using Application.Interfaces;
 using Application.Reactive.Interfaces;
 using Domain.Entities;

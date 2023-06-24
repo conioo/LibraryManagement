@@ -106,7 +106,7 @@ namespace WebAPI.Controllers
 
         [HttpGet(Profiles.GetProfileWithHistoryByCardNumber)]
         [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
-        [SwaggerOperation(Summary = "Returns profile with history")]
+        [SwaggerOperation(Summary = "Returns profile by card number with history")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProfileResponse), StatusCodes.Status200OK)]
@@ -119,7 +119,7 @@ namespace WebAPI.Controllers
 
         [HttpGet(Profiles.GetHistoryByCardNumber)]
         [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
-        [SwaggerOperation(Summary = "Returns profile with history")]
+        [SwaggerOperation(Summary = "Returns history by card number")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(ProfileHistoryResponse), StatusCodes.Status200OK)]
@@ -132,7 +132,7 @@ namespace WebAPI.Controllers
 
         [HttpGet(Profiles.GetCurrentRentals)]
         [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
-        [SwaggerOperation(Summary = "Returns current rentals")]
+        [SwaggerOperation(Summary = "Returns current rentalsby card number")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(IEnumerable<RentalResponse>), StatusCodes.Status200OK)]
@@ -145,7 +145,7 @@ namespace WebAPI.Controllers
 
         [HttpGet(Profiles.GetCurrentReservations)]
         [Authorize(Roles = $"{UserRoles.Admin}, {UserRoles.Moderator}, {UserRoles.Worker}")]
-        [SwaggerOperation(Summary = "Returns current reservations")]
+        [SwaggerOperation(Summary = "Returns current reservations by card number")]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]

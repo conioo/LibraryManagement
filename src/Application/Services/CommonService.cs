@@ -4,7 +4,7 @@ using Application.Extensions;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Domain.Common;
+using Domain.Helpers;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -61,13 +61,12 @@ namespace Application.Services
         public virtual async Task<TResponse> AddAsync(TRequest dto)
         {
             var entity = _mapper.Map<T>(dto);
-            var entityEntry = await _unitOfWork.Set<T>().AddAsync(entity);
-
+            await _unitOfWork.Set<T>().AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation($"{_userResolverService.GetUserName} added the {typeof(T).Name} with id: {entityEntry.GetPrimaryKey()}");
+            _logger.LogInformation($"{_userResolverService.GetUserName} added the {typeof(T).Name} with id: {EntityHelper.GetKeyValue(entity)}");
 
-            return _mapper.Map<TResponse>(entityEntry.Entity);
+            return _mapper.Map<TResponse>(entity);
         }
         public virtual async Task UpdateAsync(string id, TRequest dto)
         {
@@ -87,15 +86,18 @@ namespace Application.Services
         }
         public virtual async Task RemoveAsync(string id)
         {
-            var existedEntity = await _unitOfWork.Set<T>().FindAsync(id);
+            var entity = EntityHelper.GetEntityWithKey<T>(id);
 
-            if (existedEntity is null)
+            _unitOfWork.Set<T>().Remove(entity);
+
+            try
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
             {
                 throw new NotFoundException();
             }
-
-            _unitOfWork.Set<T>().Remove(existedEntity);
-            await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation($"{_userResolverService.GetUserName} removed the {typeof(T).Name} with id: {id}");
         }
@@ -131,6 +133,22 @@ namespace Application.Services
             _unitOfWork.Set<T>().RemoveRange(entities);
 
             await _unitOfWork.SaveChangesAsync();
+
+            //foreach (var key in keys)
+            //{
+            //    var entity = EntityHelper.GetEntityWithKey<T>(key);
+
+            //    _unitOfWork.Entry(entity).State = EntityState.Deleted;
+            //}
+
+            //try
+            //{
+            //    await _unitOfWork.SaveChangesAsync();
+            //}
+            //catch (DbUpdateConcurrencyException)
+            //{
+            //    throw new NotFoundException();
+            //}
 
             _logger.LogInformation($"{_userResolverService.GetUserName} removed {keys.Count()} the {typeof(T).Name}");
         }

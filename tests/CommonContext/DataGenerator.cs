@@ -5,6 +5,7 @@ using Bogus;
 using Domain.Entities;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
+using Org.BouncyCastle.Crmf;
 using Profile = Domain.Entities.Profile;
 
 namespace CommonContext
@@ -75,6 +76,7 @@ namespace CommonContext
                 .RuleFor(copy => copy.Library, _ => libraryGenerator.Generate())
                 .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGenerator.Generate());
 
+
             var rentalGenerator = new Faker<Rental>()
                 .RuleFor(rental => rental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now)))
                 .RuleFor(rental => rental.EndDate, (_, rental) => rental.BeginDate.AddDays(30));
@@ -88,6 +90,7 @@ namespace CommonContext
                .RuleFor(archivalRental => archivalRental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
                .RuleFor(archivalRental => archivalRental.EndDate, (_, rental) => rental.BeginDate.AddDays(30))
                .RuleFor(archivalRental => archivalRental.ReturnedDate, (faker, rental) => faker.Date.BetweenDateOnly(rental.BeginDate.AddDays(1), rental.BeginDate.AddMonths(1)));
+               
 
             var archivalReservationGenerator = new Faker<ArchivalReservation>()
               .RuleFor(reservation => reservation.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
@@ -95,27 +98,36 @@ namespace CommonContext
               .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.BetweenDateOnly(reservation.BeginDate.AddDays(1), reservation.EndDate));
 
             var profileHistoryGenerator = new Faker<ProfileHistory>()
-               .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
+               .RuleFor(profileHistory => profileHistory.ArchivalRentals, (_, profileHistory) =>
                {
                    var archival = archivalRentalGenerator.Generate(1).First();
-                   archival.Copy = copyGenerator.Generate(1).First();
+
+                   var copyHistory = copyHistoryGenerator.Generate(1).First();
+                   copyHistory.ArchivalRentals = null;
+
+                   archival.CopyHistory = copyHistory;
+                   archival.ProfileHistory = profileHistory;
+                   
                    return new List<ArchivalRental> { archival };
-               }).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
+               }).RuleFor(profileHistory => profileHistory.ArchivalReservations, (_, profileHistory) =>
                {
                    var archival = archivalReservationGenerator.Generate(1).First();
-                   archival.Copy = copyGenerator.Generate(1).First();
+
+                   archival.CopyHistory = profileHistory.ArchivalRentals.First().CopyHistory;
+                   archival.ProfileHistory = profileHistory;
+
                    return new List<ArchivalReservation> { archival };
                });
 
             var profileGenerator = new Faker<Profile>()
                .RuleFor(profile => profile.UserId, faker => "empty_user_id")
                .RuleFor(profile => profile.ProfileHistory, faker => profileHistoryGenerator.Generate(1).First())
-               .RuleFor(profile => profile.CurrrentRentals, _ =>
+               .RuleFor(profile => profile.CurrentRentals, _ =>
                {
                    var rental = rentalGenerator.Generate(1).First();
                    rental.Copy = copyGenerator.Generate(1).First();
                    return new List<Rental> { rental };
-               }).RuleFor(profile => profile.CurrrentReservations, _ =>
+               }).RuleFor(profile => profile.CurrentReservations, _ =>
                {
                    var reservation = reservationGenerator.Generate(1).First();
                    reservation.Copy = copyGenerator.Generate(1).First();

@@ -646,8 +646,6 @@ namespace WebAPITests.Integration
             (await _sharedContext.UserManager.IsInRoleAsync(user_1, _roles.First().Name)).Should().BeFalse();
         }
 
-
-
         [Fact]
         async Task UpdateRoleAsync_ForInvalidModel_Returns400BadRequest()
         {
@@ -674,7 +672,6 @@ namespace WebAPITests.Integration
             var details = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
             details.Errors.Count().Should().Be(1);
         }
-
         [Fact]
         async Task UpdateRoleAsync_ForValidModel_Returns200Ok()
         {
@@ -700,7 +697,6 @@ namespace WebAPITests.Integration
 
             updatedRole.Should().BeEquivalentTo(roleRequest, options => options.ExcludingMissingMembers());
         }
-
         [Fact]
         async Task UpdateRoleAsync_ForInvalidId_Returns404NotFound()
         {
@@ -748,12 +744,9 @@ namespace WebAPITests.Integration
             _allUsers.Add(admin);
             _allUsers.Add(_defaultUser);
         }
-
         public void Dispose()
         {
             _sharedContext.ResetState();
         }
-
-
     }
 }

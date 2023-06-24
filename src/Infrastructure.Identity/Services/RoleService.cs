@@ -7,6 +7,7 @@ using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sieve.Services;
 using System.Data;
@@ -26,14 +27,12 @@ namespace Application.Services
         }
         public async Task AddUsersToRoleAsync(RoleModificationRequest roleModificationRequest)
         {
-            var role = _identityContext.Roles.Find(roleModificationRequest.RoleId);
+            var roleName = await _identityContext.Roles.Where(role => role.Id == roleModificationRequest.RoleId).Select(role => role.Name).FirstOrDefaultAsync();
 
-            if (role is null)
+            if (roleName is null)
             {
                 throw new NotFoundException($"role by id {roleModificationRequest.RoleId} doesn't exist");
             }
-
-            var roleName = role.Name;
 
             var users = new List<ApplicationUser>();
 
@@ -63,15 +62,12 @@ namespace Application.Services
         }
         public async Task RemoveRoleFromUsersAsync(RoleModificationRequest roleModificationRequest)
         {
-            var role = _identityContext.Roles.Find(roleModificationRequest.RoleId);
+            var roleName = await _identityContext.Roles.Where(role => role.Id == roleModificationRequest.RoleId).Select(role => role.Name).FirstOrDefaultAsync();
 
-            if (role is null)
+            if (roleName is null)
             {
                 throw new NotFoundException($"role by id {roleModificationRequest.RoleId} doesn't exist");
             }
-
-            var roleName = role.Name;
-
             var users = new List<ApplicationUser>();
 
             foreach (var userId in roleModificationRequest.UsersId)
@@ -122,14 +118,14 @@ namespace Application.Services
         }
         public async Task<IEnumerable<UserResponse>> GetUsersInRoleAsync(string roleId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
+            var roleName = await _identityContext.Roles.Where(role => role.Id == roleId).Select(role => role.Name).FirstOrDefaultAsync();
 
-            if (role is null)
+            if (roleName is null)
             {
                 throw new NotFoundException();
             }
 
-            var users = await _userManager.GetUsersInRoleAsync(role.Name);
+            var users = await _userManager.GetUsersInRoleAsync(roleName);
 
             var usersResponse = _mapper.Map<IEnumerable<UserResponse>>(users);
 
@@ -167,14 +163,12 @@ namespace Application.Services
         }
         public override async Task RemoveAsync(string id)
         {
-            var existedEntity = await _roleManager.FindByIdAsync(id);
+            var result = await _roleManager.DeleteAsync(new IdentityRole() { Id = id});
 
-            if (existedEntity is null)
+            if(result.Succeeded is false)
             {
                 throw new NotFoundException();
             }
-
-            await _roleManager.DeleteAsync(existedEntity);
 
             _logger.LogInformation($"{_userResolverService.GetUserName} removed role: {id}");
         }

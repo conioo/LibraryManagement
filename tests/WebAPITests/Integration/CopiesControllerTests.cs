@@ -37,8 +37,8 @@ namespace WebAPITests.Integration
             _defaultNumberCopies = 2;
 
             var profile = DataGenerator.Get<Profile>(1).First();
-            profile.CurrrentRentals.Clear();
-            profile.CurrrentReservations.Clear();
+            profile.CurrentRentals.Clear();
+            profile.CurrentReservations.Clear();
             profile.ProfileHistory.Clear();
 
             _copies = DataGenerator.Get<Copy>(_defaultNumberCopies).ToList();
@@ -305,8 +305,11 @@ namespace WebAPITests.Integration
                 return options;
             });
 
-            copyResponse.ArchivalRentals.First().ItemTitle.Should().BeNull();
-            copyResponse.ArchivalReservations.First().ItemTitle.Should().BeNull();
+            copyResponse.ArchivalRentals.First().ItemTitle.Should().Be(_copies.First().Item.Title);
+            copyResponse.ArchivalRentals.First().ProfileLibraryCardNumber.Should().Be(_copies.First().CopyHistory.ArchivalRentals.First().ProfileHistory.Profile.LibraryCardNumber);
+            copyResponse.ArchivalRentals.First().CopyInventoryNumber.Should().Be(_copies.First().CopyHistory.ArchivalRentals.First().CopyHistory.Copy.InventoryNumber);
+
+            copyResponse.ArchivalReservations.First().ItemTitle.Should().BeNull(); // kopia tu
         }
 
         [Fact]

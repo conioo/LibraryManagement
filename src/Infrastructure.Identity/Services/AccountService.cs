@@ -107,28 +107,28 @@ namespace Application.Services
         }
         public async Task<LoginResponse> LoginAsync(LoginRequest dto)
         {
-            var user = await _identityContext.Users.Include(user => user.RefreshToken).SingleOrDefaultAsync(user => user.Email == dto.Email);
+            var userInfo = await _identityContext.Users.Where(user => user.Email == dto.Email).Select(user => new { user, user.RefreshTokenId }).FirstOrDefaultAsync();
 
-            if (user is null)
+            if (userInfo is null)
             {
                 throw new AuthenticationException("Invalid email or password");
             }
 
-            var result = await _signInManager.PasswordSignInAsync(user, dto.Password, false, false);
+            var result = await _signInManager.PasswordSignInAsync(userInfo.user, dto.Password, false, false);
 
             if (!result.Succeeded)
             {
                 throw new AuthenticationException("Invalid email or password");
             }
 
-            var token = await _jwtService.GenerateJwtAsync(user);
+            var token = await _jwtService.GenerateJwtAsync(userInfo.user);
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            var refreshToken = _jwtService.GenerateRefreshToken(user);
+            var refreshToken = _jwtService.GenerateRefreshToken(userInfo.user);
 
-            if (user.RefreshToken is not null)
+            if (userInfo.RefreshTokenId is not null)
             {
-                _identityContext.RefreshTokens.Remove(user.RefreshToken);
+                _identityContext.RefreshTokens.Remove(new RefreshToken() { Id = userInfo.RefreshTokenId });
             }
 
             await _identityContext.RefreshTokens.AddAsync(refreshToken);
@@ -136,7 +136,7 @@ namespace Application.Services
 
             var response = new LoginResponse
             {
-                UserId = user.Id,
+                UserId = userInfo.user.Id,
                 Jwt = tokenHandler.WriteToken(token),
                 RefreshToken = refreshToken.Token,
             };
@@ -182,14 +182,14 @@ namespace Application.Services
         }
         public async Task<string> RefreshToken(string refreshToken)
         {
-            var storedToken = await _identityContext.Set<RefreshToken>().Include(token => token.ApplicationUser).FirstOrDefaultAsync(entity => entity.Token == refreshToken);
+            var storedTokenInfo = await _identityContext.Set<RefreshToken>().Where(entity => entity.Token == refreshToken).Select(refreshToken => new {refreshToken.IsActive, refreshToken.ApplicationUser}).FirstOrDefaultAsync();
 
-            if (storedToken is null || !storedToken.IsActive)
+            if (storedTokenInfo is null || storedTokenInfo.IsActive is false)
             {
                 throw new AuthenticationException("refresh token is not correct");
             }
 
-            var newJwT = await _jwtService.GenerateJwtAsync(storedToken.ApplicationUser);
+            var newJwT = await _jwtService.GenerateJwtAsync(storedTokenInfo.ApplicationUser);
 
             var tokenHandler = new JwtSecurityTokenHandler();
 
@@ -199,11 +199,12 @@ namespace Application.Services
         {
             var userId = _userManager.GetUserId(principal);
 
-            var user = await _identityContext.Users.Include(user => user.RefreshToken).SingleAsync(user => user.Id == userId);
+            var userInfo = await _identityContext.Users.Where(user => user.Id == userId).Select(user => new { user.RefreshTokenId }).FirstOrDefaultAsync();
 
-            if (user.RefreshToken is not null)
+            if (userInfo?.RefreshTokenId is not null)
             {
-                user.RefreshToken.Revoke = true;
+                var modifiedRefreshToken = new RefreshToken() { Id =  userInfo.RefreshTokenId, Revoke = true };
+                _identityContext.Entry(modifiedRefreshToken).Property(refreshToken => refreshToken.Revoke).IsModified = true;
                 await _identityContext.SaveChangesAsync();
             }
 

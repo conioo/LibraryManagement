@@ -439,11 +439,12 @@ namespace WebAPITests.Integration
         [Fact]
         async Task UpdateItemAsync_ForInvalidModel_Returns400BadRequest()
         {
-            var updateItem = DataGenerator._mapper.Map<ItemRequest>(_items.First());
-
-            updateItem.FormOfPublication = Form.AudioBook;
-            updateItem.ISBN = "12345678910111213";
-            updateItem.Title = "";
+            var updateItem = new ItemRequest()
+            {
+                FormOfPublication = Form.AudioBook,
+                ISBN = "12345678910111213",
+                Title = "",
+            };
 
             var request = new HttpRequestMessage()
             {
@@ -463,7 +464,7 @@ namespace WebAPITests.Integration
 
 
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
-            dbItem.Should().NotBeEquivalentTo(updateItem, options => options.ExcludingMissingMembers());
+            dbItem.Should().BeEquivalentTo(_items.First());
 
             dbItem.LastModified.Should().Be(dbItem.Created);
         }
@@ -471,11 +472,12 @@ namespace WebAPITests.Integration
         [Fact]
         async Task UpdateItemAsync_ForInvalidId_Returns404NotFound()
         {
-            var updateItem = DataGenerator._mapper.Map<ItemRequest>(_items.First());
-
-            updateItem.FormOfPublication = Form.AudioBook;
-            updateItem.ISBN = "1111111111111";
-            updateItem.Title = "updated title";
+            var updateItem = new ItemRequest()
+            {
+                FormOfPublication = Form.AudioBook,
+                ISBN = "1111111111111",
+                Title = "updated title"
+            };
 
             var request = new HttpRequestMessage()
             {
@@ -492,18 +494,19 @@ namespace WebAPITests.Integration
 
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
 
-            dbItem.Should().NotBeEquivalentTo(updateItem, options => options.ExcludingMissingMembers());
+            dbItem.Should().BeEquivalentTo(_items.First());
             dbItem.LastModified.Should().Be(dbItem.Created);
         }
 
         [Fact]
         async Task UpdateItemAsync_ForValidModel_Returns200Ok()
         {
-            var updateItem = DataGenerator._mapper.Map<ItemRequest>(_items.First());
-
-            updateItem.FormOfPublication = Form.Film;
-            updateItem.ISBN = "1111111111111";
-            updateItem.Title = "updated title";
+            var updateItem = new ItemRequest()
+            {
+                FormOfPublication = Form.Film,
+                ISBN = "1111111111111",
+                Title = "updated title"
+            };
 
             var request = new HttpRequestMessage()
             {
@@ -518,14 +521,16 @@ namespace WebAPITests.Integration
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
-            dbItem.Should().BeEquivalentTo(updateItem, options => options.ExcludingMissingMembers());
             dbItem.LastModified.Should().BeAfter(dbItem.Created);
+            dbItem.Title.Should().Be(updateItem.Title);
+            dbItem.FormOfPublication.Should().Be(updateItem.FormOfPublication);
+            dbItem.ISBN.Should().Be(updateItem.ISBN);
+            dbItem.Should().BeEquivalentTo(_items.First(), opt => opt.Excluding(item => item.FormOfPublication).Excluding(item => item.Title).Excluding(item => item.ISBN).Excluding(item => item.LastModified).Excluding(item => item.LastModifiedBy));
         }
 
         public void Dispose()
         {
             _sharedContext.ResetState();
         }
-
     }
 }

@@ -12,7 +12,7 @@ namespace Application.Dtos.Response
 
         public bool IsActive { get; set; }
 
-        public ICollection<RentalResponse>? CurrrentRentals { get; set; }
+        public ICollection<RentalResponse>? CurrentRentals { get; set; }
         public ICollection<ReservationResponse>? CurrrentReservations { get; set; }
 
         public ProfileHistoryResponse? ProfileHistory { get; set; }

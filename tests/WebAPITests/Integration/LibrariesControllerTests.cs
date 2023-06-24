@@ -254,10 +254,11 @@ namespace WebAPITests.Integration
         [Fact]
         async Task UpdateLibraryAsync_ForInvalidModel_Returns400BadRequest()
         {
-            var updateLibrary = DataGenerator._mapper.Map<LibraryRequest>(_libraries.First());
-
-            updateLibrary.Name = null;
-            updateLibrary.NumberOfComputerStations = -1;
+            var updateLibrary = new LibraryRequest()
+            {
+                Name = "",
+                NumberOfComputerStations = -1
+            };
 
             var request = new HttpRequestMessage()
             {
@@ -275,21 +276,19 @@ namespace WebAPITests.Integration
 
             details.Errors.Count().Should().Be(2);
 
-
             _sharedContext.DbContext.Set<Library>().Count().Should().Be(4);
-            dbLibrary.Should().NotBeEquivalentTo(updateLibrary, options => options.ExcludingMissingMembers());
-
             dbLibrary.LastModified.Should().Be(dbLibrary.Created);
         }
 
         [Fact]
         async Task UpdateLibraryAsync_ForValidModel_Returns200Ok()
         {
-            var updateLibrary = DataGenerator._mapper.Map<LibraryRequest>(_libraries.First());
-
-            updateLibrary.Name = "updated name";
-            updateLibrary.NumberOfComputerStations = 6;
-            updateLibrary.Description = "updated des";
+            var updateLibrary = new LibraryRequest()
+            {
+                Name = "updated name",
+                NumberOfComputerStations = 6,
+                Description = "updated des"
+            };
 
             var request = new HttpRequestMessage()
             {
@@ -306,8 +305,12 @@ namespace WebAPITests.Integration
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
             _sharedContext.DbContext.Set<Library>().Count().Should().Be(4);
-            dbLibrary.Should().BeEquivalentTo(updateLibrary, options => options.ExcludingMissingMembers());
             dbLibrary.LastModified.Should().BeAfter(dbLibrary.Created);
+
+            dbLibrary.Should().BeEquivalentTo(_libraries.First(), opt => opt.Excluding(library => library.Description).Excluding(library => library.Name).Excluding(library => library.NumberOfComputerStations).Excluding(library => library.LastModified).Excluding(library => library.LastModifiedBy));
+            dbLibrary.Name.Should().Be(updateLibrary.Name);
+            dbLibrary.NumberOfComputerStations.Should().Be(updateLibrary.NumberOfComputerStations);
+            dbLibrary.Description.Should().Be(updateLibrary.Description);
         }
 
         public void Dispose()

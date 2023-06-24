@@ -20,31 +20,29 @@ namespace Application.Services
 
         public override async Task<CopyResponse> AddAsync(CopyRequest dto)
         {
-            var item = await _unitOfWork.Set<Item>().FindAsync(dto.ItemId);
-
-            if (item is null)
+            var itemExist = await _unitOfWork.Set<Item>().AnyAsync(item => item.Id == dto.ItemId);
+            if (itemExist is false)
             {
-                throw new NotFoundException();
+                throw new NotFoundException("item not found");
             }
 
-            var library = await _unitOfWork.Set<Library>().FindAsync(dto.LibraryId);
-
-            if (library is null)
+            var library = await _unitOfWork.Set<Library>().AnyAsync(library => library.Id == dto.LibraryId);
+            if (library is false)
             {
-                throw new NotFoundException();
+                throw new NotFoundException("library not found");
             }
 
             var copies = new List<Copy>();
 
             for (int i = 0; i < dto.Count; ++i)
             {
-                copies.Add(new Copy { Item = item, Library = library, CopyHistory = new CopyHistory() });
+                copies.Add(new Copy { ItemId = dto.ItemId, LibraryId = dto.LibraryId, CopyHistory = new CopyHistory() });
             }
 
             await _unitOfWork.Set<Copy>().AddRangeAsync(copies);
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation($"{_userResolverService.GetUserName} added {dto.Count} the copies '{item.Title}'");
+            _logger.LogInformation($"{_userResolverService.GetUserName} added {dto.Count} the copies item: {dto.ItemId} to library {dto.LibraryId}");
 
             return null;
         }
@@ -58,12 +56,12 @@ namespace Application.Services
                 .ProjectTo<RentalResponse>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync();
 
-            if(currentRental is null)
+            if (currentRental is null)
             {
                 throw new NotFoundException();
             }
 
-            if(currentRental.CopyInventoryNumber is null)
+            if (currentRental.CopyInventoryNumber is null)
             {
                 throw new NoContentException();
             }
@@ -112,14 +110,14 @@ namespace Application.Services
 
         public async Task<bool> IsAvailableAsync(string inventoryNumber)
         {
-            var copy = await _unitOfWork.Set<Copy>().FindAsync(inventoryNumber);
+            var response = await _unitOfWork.Set<Copy>().Where(copy => copy.InventoryNumber == inventoryNumber).Select(copy => new { copy.IsAvailable }).FirstOrDefaultAsync();
 
-            if(copy is null)
+            if(response is null)
             {
                 throw new NotFoundException();
             }
 
-            return copy.IsAvailable;
+            return response.IsAvailable;
         }
     }
 }

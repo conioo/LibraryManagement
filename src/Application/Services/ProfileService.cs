@@ -55,51 +55,51 @@ namespace Application.Services
 
             return response;
         }
-
         public async Task ActivationProfileAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>().FindAsync(cardNumber);
+            var profileInfo = await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).Select(profile => new { profile.IsActive }).FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            if (profile.IsActive is true)
+            if (profileInfo.IsActive is true)
             {
                 throw new BadRequestException("Profile is already active");
             }
 
-            profile.IsActive = true;
+            //await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).ExecuteUpdateAsync(p => p.SetProperty(profile => profile.IsActive, profile => true));
+            var modifiedProfile = new Profile() { LibraryCardNumber = cardNumber, IsActive = true };
 
-            _unitOfWork.Set<Profile>().Update(profile);
+            _unitOfWork.Set<Profile>().Entry(modifiedProfile).Property(profile => profile.IsActive).IsModified = true;
 
             await _unitOfWork.SaveChangesAsync();
+
             _logger.LogInformation($"Activated profile for card number {cardNumber} ");
         }
-
         public async Task DeactivationProfileAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>().FindAsync(cardNumber);
+            var profileInfo = await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).Select(profile => new { profile.IsActive }).FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            if (profile.IsActive is false)
+            if (profileInfo.IsActive is false)
             {
                 throw new BadRequestException("Profile is already deactive");
             }
 
-            profile.IsActive = false;
-
-            _unitOfWork.Set<Profile>().Update(profile);
+            //await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).ExecuteUpdateAsync(p => p.SetProperty(profile => profile.IsActive, profile => false));
+            var modifiedProfile = new Profile() { LibraryCardNumber = cardNumber, IsActive = false };
+            _unitOfWork.Set<Profile>().Entry(modifiedProfile).Property(profile => profile.IsActive).IsModified = true;
 
             await _unitOfWork.SaveChangesAsync();
+
             _logger.LogInformation($"Deactivated profile for card number {cardNumber} ");
         }
-
         public async Task<ProfileResponse> GetProfileAsync()
         {
             var cardNumber = _userResolverService.GetProfileCardNumber;
@@ -124,40 +124,34 @@ namespace Application.Services
         }
         public async Task<ProfileResponse> GetProfileByCardNumberAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>()
+            var profileResponse = await _unitOfWork.Set<Profile>()
                .AsNoTracking()
                .Where(profile => profile.LibraryCardNumber == cardNumber)
                .ProjectTo<ProfileResponse>(_mapper.ConfigurationProvider)
                .FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileResponse is null)
             {
                 throw new NotFoundException();
             }
 
-            var response = _mapper.Map<ProfileResponse>(profile);
-
-            return response;
+            return profileResponse;
         }
-
         public async Task<ProfileResponse> GetProfileWithHistoryByCardNumberAsync(string cardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>()
+            var profileResponse = await _unitOfWork.Set<Profile>()
                .AsNoTracking()
                .Where(profile => profile.LibraryCardNumber == cardNumber)
                .ProjectTo<ProfileResponse>(_mapper.ConfigurationProvider, response => response.ProfileHistory)
                .FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileResponse is null)
             {
                 throw new NotFoundException();
             }
 
-            var response = _mapper.Map<ProfileResponse>(profile);
-
-            return response;
+            return profileResponse;
         }
-
         public async Task<ProfileHistoryResponse> GetProfileHistoryByCardNumberAsync(string cardNumber)
         {
             var response = await _unitOfWork.Set<Profile>()
@@ -173,15 +167,13 @@ namespace Application.Services
             }
 
             return response;
-            throw new NotImplementedException();
         }
-
         public async Task<ICollection<RentalResponse>> GetCurrentRentalsAsync(string cardNumber)
         {
             //var response = await _unitOfWork.Set<Profile>()
             // .AsNoTracking()
             // .Where(profile => profile.LibraryCardNumber == cardNumber)
-            // .Select(profile => profile.CurrrentRentals)
+            // .Select(profile => profile.CurrentRentals)
             // .ProjectTo<ICollection<RentalResponse>>(_mapper.ConfigurationProvider)
             // .FirstOrDefaultAsync();
 
@@ -189,7 +181,7 @@ namespace Application.Services
                        .AsNoTracking()
                        .Where(profile => profile.LibraryCardNumber == cardNumber)
                        .ProjectTo<ProfileResponse>(_mapper.ConfigurationProvider)
-                       .Select(response => response.CurrrentRentals)
+                       .Select(response => response.CurrentRentals)
                        .FirstOrDefaultAsync();
 
             if (response is null)
@@ -199,7 +191,6 @@ namespace Application.Services
 
             return response;
         }
-
         public async Task<ICollection<ReservationResponse>> GetCurrentReservationsAsync(string cardNumber)
         {
             var response = await _unitOfWork.Set<Profile>()

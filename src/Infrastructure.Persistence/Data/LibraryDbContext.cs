@@ -1,4 +1,5 @@
 ﻿#pragma warning disable CS8618
+using Application.Dtos.Request;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -35,7 +36,7 @@ namespace Infrastructure.Persistence.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-               optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"));
+               optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"), options => options.UseDateOnlyTimeOnly());
                 //if development
                //optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
             }
@@ -67,6 +68,10 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.HasOne(copy => copy.CurrentReservation)
                .WithOne(reservation => reservation.Copy)
                .HasForeignKey<Copy>(copy => copy.CurrentReservationId);
+
+                entityBuilder.HasOne(copy => copy.CopyHistory)
+                .WithOne(copyHistory => copyHistory.Copy)
+                .HasForeignKey<Copy>(copy => copy.CopyHistoryId);
             });
 
             builder.Entity<Profile>(entityBuilder =>
@@ -74,6 +79,10 @@ namespace Infrastructure.Persistence.Data
                 entityBuilder.HasKey(entity => entity.LibraryCardNumber);
 
                 entityBuilder.Property(entity => entity.LibraryCardNumber).ValueGeneratedOnAdd();
+
+                entityBuilder.HasOne(profile => profile.ProfileHistory)
+                .WithOne(profileHistory => profileHistory.Profile)
+                .HasForeignKey<Profile>(profile => profile.ProfileHistoryId);
             });
 
             builder.Entity<Rental>(entityBuilder =>

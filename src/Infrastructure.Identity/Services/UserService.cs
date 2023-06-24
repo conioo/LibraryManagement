@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sieve.Services;
-using System.Data;
 using System.Security.Claims;
 using Profile = Domain.Entities.Profile;
 
@@ -45,9 +44,9 @@ namespace Application.Services
                 throw new IdentityException(result.Errors);
             }
 
-            if(user.ProfileCardNumber is not null)
+            if (user.ProfileCardNumber is not null)
             {
-                _unitOfWork.Set<Profile>().Remove(new Profile() { LibraryCardNumber =  user.ProfileCardNumber });
+                _unitOfWork.Set<Profile>().Remove(new Profile() { LibraryCardNumber = user.ProfileCardNumber });
                 await _unitOfWork.SaveChangesAsync();
             }
 
@@ -90,20 +89,24 @@ namespace Application.Services
 
         public async Task BindProfil(string userId, string profileCardNumber, ProfileRequest dto)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _identityContext.Users.Where(user => user.Id == userId).Select(user => new ApplicationUser() { ProfileCardNumber = user.ProfileCardNumber }).FirstOrDefaultAsync();
 
             if (user is null)
             {
                 throw new NotFoundException();
             }
 
-            if(user.ProfileCardNumber is not null)
+            if (user.ProfileCardNumber is not null)
             {
                 throw new BadRequestException($"Profile already exists for user {userId}");
             }
 
+            user.Id = userId;
             user.ProfileCardNumber = profileCardNumber;
             user.PhoneNumber = dto.PhoneNumber;
+
+            _identityContext.Entry(user).Property(user => user.ProfileCardNumber).IsModified = true;
+            _identityContext.Entry(user).Property(user => user.PhoneNumber).IsModified = true;
 
             var result = await _userManager.UpdateAsync(user);
 
@@ -115,14 +118,14 @@ namespace Application.Services
 
         public async Task<string> GetEmail(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var userInfo = await _identityContext.Users.Where(user => user.Id == userId).Select(user => new { user.Email }).FirstOrDefaultAsync();
 
-            if (user is null)
+            if (userInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            return user.Email;
+            return userInfo.Email;
         }
     }
 }

@@ -8,7 +8,6 @@ using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Settings;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -37,10 +36,20 @@ namespace Application.Services
             _cache = cache;
         }
 
-        private ArchivalRental GetArchivalRental(Rental rental)
+        private ArchivalRental GetArchivalRental(Rental rental, string copyHistoryId, string profileHistoryId)
         {
+            return GetArchivalRental(rental, copyHistoryId, profileHistoryId, new CopyHistory() { Id = copyHistoryId }, new ProfileHistory() { Id = profileHistoryId });
+        }
+
+        private ArchivalRental GetArchivalRental(Rental rental, string copyHistoryId, string profileHistoryId, CopyHistory referenceToCopyHistory, ProfileHistory referenceToProfileHistory)
+        {
+            _unitOfWork.Set<CopyHistory>().Attach(referenceToCopyHistory);
+            _unitOfWork.Set<ProfileHistory>().Attach(referenceToProfileHistory);
+
             var archivalRental = _mapper.Map<ArchivalRental>(rental);
             archivalRental.ReturnedDate = DateOnly.FromDateTime(DateTime.Now);
+            archivalRental.CopyHistory = referenceToCopyHistory;
+            archivalRental.ProfileHistory = referenceToProfileHistory;
 
             return archivalRental;
         }
@@ -54,117 +63,134 @@ namespace Application.Services
 
         public async Task<RentalResponse> AddRentalAsync(RentalRequest request, string profileLibraryCardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>()
-                .Include(profile => profile.CurrrentRentals)
+            var profileInfo = await _unitOfWork.Set<Profile>()
                 .Where(profile => profile.LibraryCardNumber == profileLibraryCardNumber)
+                .Select(profile => new { profile.IsActive, profile.UserId, CurrentRentalsCount = profile.CurrentRentals.Count })
                 .FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileInfo is null)
             {
                 throw new NotFoundException("profile not found");
             }
 
-            if (profile.IsActive is false)
+            if (profileInfo.IsActive is false)
             {
                 throw new BadRequestException("profile is deactivate");
             }
 
-            if (profile.CurrrentRentals is not null && profile.CurrrentRentals.Count >= _rentalSettings.MaxRentalsForUser)
+            if (profileInfo.CurrentRentalsCount >= _rentalSettings.MaxRentalsForUser)
             {
                 throw new BadRequestException("user has a maximum number of rentals");
             }
 
+            var copyInfo = await _unitOfWork.Set<Copy>()
+                .Where(copy => copy.InventoryNumber == request.CopyInventoryNumber)
+                .Select(copy => new { copy.IsAvailable })
+                .FirstOrDefaultAsync();
 
-            var copy = await _unitOfWork.Set<Copy>().FindAsync(request.CopyInventoryNumber);
-
-            if (copy is null)
+            if (copyInfo is null)
             {
                 throw new NotFoundException("copy not found");
             }
 
-            if (copy.IsAvailable is false)
+            if (copyInfo.IsAvailable is false)
             {
                 throw new BadRequestException("copy doesn't available");
             }
+
+            var referenceToProfile = new Profile() { LibraryCardNumber = profileLibraryCardNumber };
+            var referenceToCopy = new Copy() { InventoryNumber = request.CopyInventoryNumber, IsAvailable = false };
+
+            _unitOfWork.Set<Profile>().Attach(referenceToProfile);
+            _unitOfWork.Set<Copy>().Attach(referenceToCopy);
 
             var newRental = new Rental()
             {
                 BeginDate = DateOnly.FromDateTime(DateTime.Now),
                 EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(_rentalSettings.TimeInDays)),
-                Profile = profile,
-                Copy = copy
+                Profile = referenceToProfile,
+                Copy = referenceToCopy
             };
 
+            //await _unitOfWork.Set<Copy>().Where(copy => copy.InventoryNumber == profileLibraryCardNumber).ExecuteUpdateAsync(s => s.SetProperty(copy => copy.IsAvailable, _ => false));
+
+            _unitOfWork.Set<Copy>().Entry(referenceToCopy).Property(copy => copy.IsAvailable).IsModified = true;
             await _unitOfWork.Set<Rental>().AddAsync(newRental);
-            copy.IsAvailable = false;
+
             await _unitOfWork.SaveChangesAsync();
 
             _countingOfPenaltyCharges.AddRental(newRental);
 
-            _logger.LogInformation($"User: {profile.UserId} rented copy: {copy.InventoryNumber}");
+            _logger.LogInformation($"User: {profileInfo.UserId} rented copy: {request.CopyInventoryNumber}");
 
             return _mapper.Map<RentalResponse>(newRental);
         }
         public async Task AddRentalsAsync(ICollection<RentalRequest> requests, string profileLibraryCardNumber)
         {
-            var profile = await _unitOfWork.Set<Profile>()
-                .AsNoTracking()
-                .Include(profile => profile.CurrrentRentals)
+            var profileInfo = await _unitOfWork.Set<Profile>()
                 .Where(profile => profile.LibraryCardNumber == profileLibraryCardNumber)
+                .Select(profile => new { profile.IsActive, profile.UserId, CurrentRentalsCount = profile.CurrentRentals.Count })
                 .FirstOrDefaultAsync();
 
-            if (profile is null)
+            if (profileInfo is null)
             {
                 throw new NotFoundException("profile not found");
             }
 
-            if (profile.IsActive is false)
+            if (profileInfo.IsActive is false)
             {
                 throw new BadRequestException("profile is deactivate");
             }
 
-            if (profile.CurrrentRentals is not null && profile.CurrrentRentals.Count + requests.Count > _rentalSettings.MaxRentalsForUser)
+            if (profileInfo.CurrentRentalsCount + requests.Count > _rentalSettings.MaxRentalsForUser)
             {
                 throw new BadRequestException("it isn't possible to add so many rentals");
             }
+
+            var referenceToProfile = new Profile() { LibraryCardNumber = profileLibraryCardNumber };
+            _unitOfWork.Set<Profile>().Attach(referenceToProfile);
 
             var newRentals = new List<Rental>();
 
             foreach (var request in requests)
             {
-                var copy = await _unitOfWork.Set<Copy>().FindAsync(request.CopyInventoryNumber);
+                var copyInfo = await _unitOfWork.Set<Copy>()
+                    .Where(copy => copy.InventoryNumber == request.CopyInventoryNumber)
+                    .Select(copy => new { copy.IsAvailable })
+                    .FirstOrDefaultAsync();
 
-                if (copy is null)
+                if (copyInfo is null)
                 {
                     throw new NotFoundException($"copy {request.CopyInventoryNumber} not found");
                 }
 
-                if (copy.IsAvailable is false)
+                if (copyInfo.IsAvailable is false)
                 {
-                    throw new BadRequestException($"copy {copy.InventoryNumber} doesn't available");
+                    throw new BadRequestException($"copy {request.CopyInventoryNumber} doesn't available");
                 }
+
+                var referenceToCopy = new Copy() { InventoryNumber = request.CopyInventoryNumber, IsAvailable = false };
+                _unitOfWork.Set<Copy>().Attach(referenceToCopy);
 
                 newRentals.Add(new Rental()
                 {
                     BeginDate = DateOnly.FromDateTime(DateTime.Now),
                     EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(_rentalSettings.TimeInDays)),
-                    //Profile = profile,
-                    Copy = copy
+                    Profile = referenceToProfile,
+                    Copy = referenceToCopy
                 });
 
-                copy.IsAvailable = false;
+                _unitOfWork.Set<Copy>().Entry(referenceToCopy).Property(copy => copy.IsAvailable).IsModified = true;
             }
 
             foreach (var rental in newRentals)
             {
-                profile.CurrrentRentals.Add(rental);
                 _countingOfPenaltyCharges.AddRental(rental);
 
-                _logger.LogInformation($"User: {profile.UserId} rented copy: {rental.Copy.InventoryNumber}");
+                _logger.LogInformation($"User: {profileInfo.UserId} rented copy: {rental.Copy.InventoryNumber}");
             }
 
             _unitOfWork.Set<Rental>().AddRange(newRentals);
-            _unitOfWork.Set<Profile>().Update(profile);
 
             await _unitOfWork.SaveChangesAsync();
         }
@@ -197,37 +223,29 @@ namespace Application.Services
                 throw new ApiException();
             }
 
-            var rental = await _unitOfWork.Set<Rental>()
-                      .Include(rental => rental.Profile)
-                      .ThenInclude(profile => profile.ProfileHistory)
-                      .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                      .Include(rental => rental.Copy)
-                      .ThenInclude(copy => copy.CopyHistory)
-                      .ThenInclude(copyHistory => copyHistory.ArchivalRentals)
-                      .Where(rental => rental.Id == id)
-                      .FirstOrDefaultAsync();
+            var rentalInfo = await _unitOfWork.Set<Rental>()
+                .Where(rental => rental.Id == id)
+                .Select(rental => new { rental, rental.Copy.CopyHistoryId, rental.Profile.ProfileHistoryId, CopyInventoryNumber = rental.Copy.InventoryNumber })
+                .FirstOrDefaultAsync();
 
-            if (rental is null)
+            if (rentalInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            var archivalRental = GetArchivalRental(rental);
-
+            var archivalRental = GetArchivalRental(rentalInfo.rental, rentalInfo.CopyHistoryId, rentalInfo.ProfileHistoryId);
             await _unitOfWork.Set<ArchivalRental>().AddAsync(archivalRental);
 
-            rental.Copy.CopyHistory.ArchivalRentals.Add(archivalRental);
-            rental.Copy.IsAvailable = true;
+            var modifiedCopy = new Copy() { InventoryNumber = rentalInfo.CopyInventoryNumber, IsAvailable = true };
+            _unitOfWork.Set<Copy>().Entry(modifiedCopy).Property(copy => copy.IsAvailable).IsModified = true;
 
-            rental.Profile.ProfileHistory.ArchivalRentals.Add(archivalRental);
-
-            _unitOfWork.Set<Rental>().Remove(rental);
+            _unitOfWork.Set<Rental>().Remove(rentalInfo.rental);
 
             await _unitOfWork.SaveChangesAsync();
 
-            _countingOfPenaltyCharges.ReturnOfItem(rental);
+            _countingOfPenaltyCharges.ReturnOfItem(rentalInfo.rental);
 
-            _logger.LogInformation($"Paid and returned rental: {rental.Id}");
+            _logger.LogInformation($"Paid and returned rental: {rentalInfo.rental.Id}");
         }
         public async Task RemoveRentalByIdAsync(string id)
         {
@@ -239,79 +257,76 @@ namespace Application.Services
             }
 
             _unitOfWork.Set<Rental>().Remove(rental);
+            await _unitOfWork.SaveChangesAsync();
 
             _countingOfPenaltyCharges.ReturnOfItem(rental);
 
             _logger.LogWarning($"Removed rental: {rental.Id}");
-
-            await _unitOfWork.SaveChangesAsync();
         }
         public async Task RenewalAsync(string id)
         {
-            var rentalToRenew = await _unitOfWork.Set<Rental>().FindAsync(id);
+            var rentalToRenewInfo = await _unitOfWork.Set<Rental>().Where(rental => rental.Id == id).Select(rental => new { rental.NumberOfRenewals, rental.EndDate }).FirstOrDefaultAsync();
 
-            if (rentalToRenew is null)
+            if (rentalToRenewInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            if (rentalToRenew.NumberOfRenewals >= _rentalSettings.MaxNumberOfRenewals)
+            if (rentalToRenewInfo.NumberOfRenewals >= _rentalSettings.MaxNumberOfRenewals)
             {
                 throw new BadRequestException("Maximum number of renewal has already been used");
             }
 
-            var newEndDate = rentalToRenew.EndDate.AddDays(_rentalSettings.TimeInDays);
+            var newEndDate = rentalToRenewInfo.EndDate.AddDays(_rentalSettings.TimeInDays);
 
-            _countingOfPenaltyCharges.RenewalRental(id, rentalToRenew.EndDate, newEndDate);
+            _countingOfPenaltyCharges.RenewalRental(id, rentalToRenewInfo.EndDate, newEndDate);
 
-            rentalToRenew.EndDate = newEndDate;
-            rentalToRenew.NumberOfRenewals++;
+            var modifiedRental = new Rental()
+            {
+                Id = id,
+                EndDate = newEndDate,
+                NumberOfRenewals = rentalToRenewInfo.NumberOfRenewals + 1
+            };
 
-            _unitOfWork.Set<Rental>().Update(rentalToRenew);
-            _logger.LogInformation($"renewaled rental: {rentalToRenew.Id} ");
+            _unitOfWork.Set<Rental>().Entry(modifiedRental).Property(rental => rental.EndDate).IsModified = true;
+            _unitOfWork.Set<Rental>().Entry(modifiedRental).Property(rental => rental.NumberOfRenewals).IsModified = true;
 
             await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation($"renewaled rental: {id} ");
         }
         public async Task<bool> ReturnAsync(string id)
         {
-            var rental = await _unitOfWork.Set<Rental>()
-                .Include(rental => rental.Profile)
-                .ThenInclude(profile => profile.ProfileHistory)
-                .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                .Include(rental => rental.Copy)
-                .ThenInclude(copy => copy.CopyHistory)
-                .ThenInclude(copyHistory => copyHistory.ArchivalRentals)
+            var rentalInfo = await _unitOfWork.Set<Rental>()
                 .Where(rental => rental.Id == id)
+                .Select(rental => new { rental, rental.Copy.CopyHistoryId, rental.Profile.ProfileHistoryId, CopyInventoryNumber = rental.Copy.InventoryNumber, rental.PenaltyCharge })
                 .FirstOrDefaultAsync();
 
-            if (rental is null)
+            if (rentalInfo is null)
             {
                 throw new NotFoundException();
             }
 
-            if (rental.PenaltyCharge is not null)
+            if (rentalInfo.PenaltyCharge is not null)
             {
-                await SetCacheForPayment(rental.Id);
+                await SetCacheForPayment(id);
 
                 return false;
             }
 
-            var archivalRental = GetArchivalRental(rental);
-
+            var archivalRental = GetArchivalRental(rentalInfo.rental, rentalInfo.CopyHistoryId, rentalInfo.ProfileHistoryId);
             await _unitOfWork.Set<ArchivalRental>().AddAsync(archivalRental);
 
-            rental.Copy.CopyHistory.ArchivalRentals.Add(archivalRental);
-            rental.Copy.IsAvailable = true;
+            var modifiedCopy = new Copy() { InventoryNumber = rentalInfo.CopyInventoryNumber, IsAvailable = true };
+            _unitOfWork.Set<Copy>().Entry(modifiedCopy).Property(copy => copy.IsAvailable).IsModified = true;
 
-            rental.Profile.ProfileHistory.ArchivalRentals.Add(archivalRental);
-
-            _unitOfWork.Set<Rental>().Remove(rental);
+            _unitOfWork.Set<Rental>().Remove(rentalInfo.rental);
 
             await _unitOfWork.SaveChangesAsync();
 
-            _countingOfPenaltyCharges.ReturnOfItem(rental);
+            _countingOfPenaltyCharges.ReturnOfItem(rentalInfo.rental);
 
-            _logger.LogInformation($"Returned rental: {rental.Id}");
+            _logger.LogInformation($"Returned rental: {id}");
 
             return true;
         }
@@ -324,45 +339,57 @@ namespace Application.Services
 
             var validRentals = new List<Rental>();
             var idsToBePaid = new List<string>();
+            var archivalRentalsToAdded = new List<ArchivalRental>();
             string result = string.Empty;
+            var copyHistoriesAttached = new Dictionary<string, CopyHistory>();
+            var profileHistoriesAttached = new Dictionary<string, ProfileHistory>();
+            CopyHistory? referenceToCopyHistory;
+            ProfileHistory? referenceToProfileHistory;
 
             foreach (var id in ids)
             {
-                var rental = await _unitOfWork.Set<Rental>()
-                  .Include(rental => rental.Profile)
-                  .ThenInclude(profile => profile.ProfileHistory)
-                  .ThenInclude(profileHistory => profileHistory.ArchivalRentals)
-                  .Include(rental => rental.Copy)
-                  .ThenInclude(copy => copy.CopyHistory)
-                  .ThenInclude(copyHistory => copyHistory.ArchivalRentals)
+                var rentalInfo = await _unitOfWork.Set<Rental>()
                   .Where(rental => rental.Id == id)
+                  .Select(rental => new { rental, rental.Copy.CopyHistoryId, rental.Profile.ProfileHistoryId, CopyInventoryNumber = rental.Copy.InventoryNumber, rental.PenaltyCharge })
                   .FirstOrDefaultAsync();
 
-                if (rental is null)
+                if (rentalInfo is null)
                 {
                     throw new NotFoundException($"rental with id: {id} not found");
                 }
 
-                if (rental.PenaltyCharge is not null)
+                if (rentalInfo.PenaltyCharge is not null)
                 {
-                    idsToBePaid.Add(rental.Id);
-
+                    idsToBePaid.Add(id);
                     continue;
                 }
 
-                var archivalRental = GetArchivalRental(rental);
+                if (copyHistoriesAttached.TryGetValue(rentalInfo.CopyHistoryId, out referenceToCopyHistory) is false)
+                {
+                    referenceToCopyHistory = new CopyHistory() { Id = rentalInfo.CopyHistoryId };
+                    _unitOfWork.Set<CopyHistory>().Attach(referenceToCopyHistory);
+                    copyHistoriesAttached.Add(rentalInfo.CopyHistoryId, referenceToCopyHistory);
+                }
 
-                await _unitOfWork.Set<ArchivalRental>().AddAsync(archivalRental);
+                if (profileHistoriesAttached.TryGetValue(rentalInfo.ProfileHistoryId, out referenceToProfileHistory) is false)
+                {
+                    referenceToProfileHistory = new ProfileHistory() { Id = rentalInfo.ProfileHistoryId };
+                    _unitOfWork.Set<ProfileHistory>().Attach(referenceToProfileHistory);
+                    profileHistoriesAttached.Add(rentalInfo.ProfileHistoryId, referenceToProfileHistory);
+                }
 
-                rental.Copy.CopyHistory.ArchivalRentals.Add(archivalRental);
-                rental.Copy.IsAvailable = true;
+                var archivalRental = GetArchivalRental(rentalInfo.rental, rentalInfo.CopyHistoryId, rentalInfo.ProfileHistoryId, referenceToCopyHistory, referenceToProfileHistory);
 
-                rental.Profile.ProfileHistory.ArchivalRentals.Add(archivalRental);
+                archivalRentalsToAdded.Add(archivalRental);
 
-                validRentals.Add(rental);
-                _unitOfWork.Set<Rental>().Remove(rental);
+                var modifiedCopy = new Copy() { InventoryNumber = rentalInfo.CopyInventoryNumber, IsAvailable = true };
+                _unitOfWork.Set<Copy>().Entry(modifiedCopy).Property(copy => copy.IsAvailable).IsModified = true;
+
+                validRentals.Add(rentalInfo.rental);
             }
 
+            _unitOfWork.Set<Rental>().RemoveRange(validRentals);
+            await _unitOfWork.Set<ArchivalRental>().AddRangeAsync(archivalRentalsToAdded);
             await _unitOfWork.SaveChangesAsync();
 
             foreach (var rental in validRentals)
