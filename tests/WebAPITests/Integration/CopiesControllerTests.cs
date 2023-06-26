@@ -37,23 +37,27 @@ namespace WebAPITests.Integration
             _defaultNumberCopies = 2;
 
             var profile = DataGenerator.Get<Profile>(1).First();
-            profile.CurrentRentals.Clear();
-            profile.CurrentReservations.Clear();
-            profile.ProfileHistory.Clear();
 
-            _copies = DataGenerator.Get<Copy>(_defaultNumberCopies).ToList();
+            _copies = new List<Copy>() { DataGenerator.GetOne<Copy>() };
             _copies.First().IsAvailable = false;
 
-            var rental = DataGenerator.Get<Rental>(1).First();
+            var rental = DataGenerator.GetOne<Rental>();
             rental.Copy = _copies.First();
             rental.Profile = profile;
 
-            var reservation = DataGenerator.Get<Reservation>(1).First();
+            var reservation = DataGenerator.GetOne<Reservation>();
             reservation.Copy = _copies.First();
             reservation.Profile = profile;
 
             _copies.First().CurrentRental = rental;
             _copies.First().CurrentReservation = reservation;
+            _copies.First().Item = _item;
+            _copies.First().Library = _library;
+            _copies.First().CopyHistory = DataGenerator.GetOneWithDependencies<CopyHistory>();
+            _copies.First().CopyHistory.ArchivalRentals.First().ProfileHistory = profile.ProfileHistory;
+            _copies.First().CopyHistory.ArchivalReservations.First().ProfileHistory = profile.ProfileHistory;
+
+            _copies.Add(DataGenerator.GetOneWithDependencies<Copy>());
 
             _sharedContext.DbContext.Set<Copy>().AddRange(_copies);
 
@@ -309,7 +313,9 @@ namespace WebAPITests.Integration
             copyResponse.ArchivalRentals.First().ProfileLibraryCardNumber.Should().Be(_copies.First().CopyHistory.ArchivalRentals.First().ProfileHistory.Profile.LibraryCardNumber);
             copyResponse.ArchivalRentals.First().CopyInventoryNumber.Should().Be(_copies.First().CopyHistory.ArchivalRentals.First().CopyHistory.Copy.InventoryNumber);
 
-            copyResponse.ArchivalReservations.First().ItemTitle.Should().BeNull(); // kopia tu
+            copyResponse.ArchivalReservations.First().ItemTitle.Should().Be(_copies.First().Item.Title);
+            copyResponse.ArchivalReservations.First().ProfileLibraryCardNumber.Should().Be(_copies.First().CopyHistory.ArchivalReservations.First().ProfileHistory.Profile.LibraryCardNumber);
+            copyResponse.ArchivalReservations.First().CopyInventoryNumber.Should().Be(_copies.First().CopyHistory.ArchivalReservations.First().CopyHistory.Copy.InventoryNumber);
         }
 
         [Fact]

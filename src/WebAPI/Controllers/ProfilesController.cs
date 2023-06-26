@@ -3,9 +3,11 @@ using Application.Dtos.Response;
 using Application.Dtos.Response.Archive;
 using Application.Interfaces;
 using Domain.Settings;
+using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
@@ -23,6 +25,7 @@ namespace WebAPI.Controllers
     {
         private readonly IProfileService _service;
         private readonly ApplicationSettings _applicationSettings;
+        private readonly IdentityContext _ss;
 
         public ProfilesController(IProfileService service, IOptions<ApplicationSettings> options)
         {

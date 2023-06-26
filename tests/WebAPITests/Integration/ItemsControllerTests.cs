@@ -129,7 +129,7 @@ namespace WebAPITests.Integration
 
         private async Task GenerateCopiesForFirstItem()
         {
-            _copies = DataGenerator.Get<Copy>(3);
+            _copies = DataGenerator.GetWithDependencies<Copy>(3);
 
             _copies.ElementAt(2).IsAvailable = false;
 

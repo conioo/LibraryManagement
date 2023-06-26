@@ -36,21 +36,21 @@ namespace WebAPITests.Integration
             _defaultUser = _sharedContext.DefaultUser;
             _defaultProfile = _sharedContext.DefaultProfile;
 
-            _copy = DataGenerator.Get<Copy>(1).First();
+            _copy = DataGenerator.GetOneWithDependencies<Copy>();
             _copy.CopyHistory.Clear();
 
-            var copy2 = DataGenerator.Get<Copy>(1).First();
-            var copy3 = DataGenerator.Get<Copy>(1).First();
+            var copy2 = DataGenerator.GetOneWithDependencies<Copy>();
+            var copy3 = DataGenerator.GetOneWithDependencies<Copy>();
 
             copy2.IsAvailable = false;
             copy3.IsAvailable = false;
             copy2.CopyHistory.Clear();
             copy3.CopyHistory.Clear();
 
-            _rentalProfile = DataGenerator.Get<Profile>(1).First();
-            _rentalProfile.CurrentRentals = null;
-            _rentalProfile.CurrentReservations = null;
-            _rentalProfile.ProfileHistory.Clear();
+            _rentalProfile = DataGenerator.GetOne<Profile>();
+            //_rentalProfile.CurrentRentals = null;
+            //_rentalProfile.CurrentReservations = null;
+            //_rentalProfile.ProfileHistory.Clear();
 
             _rentals = DataGenerator.Get<Rental>(2);
 
@@ -468,7 +468,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRentalsAsync_ForMaxAmountRentals_Returns200Ok()
         {
-            var copies = DataGenerator.Get<Copy>(4).ToList();
+            var copies = DataGenerator.GetWithDependencies<Copy>(4).ToList();
             _sharedContext.DbContext.Set<Copy>().AddRange(copies);
             await _sharedContext.DbContext.SaveChangesAsync();
 
@@ -652,7 +652,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRentalsAsync_ForOneUnavailableCopy_Returns400BadRequest()
         {
-            var copies = DataGenerator.Get<Copy>(1).ToList();
+            var copies = DataGenerator.GetWithDependencies<Copy>(1).ToList();
             copies[0].IsAvailable = false;
             _sharedContext.DbContext.Set<Copy>().AddRange(copies);
             await _sharedContext.DbContext.SaveChangesAsync();
@@ -701,7 +701,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRentalsAsync_ForTooManyRentals_Returns400BadRequest()
         {
-            var copies = DataGenerator.Get<Copy>(5).ToList();
+            var copies = DataGenerator.GetWithDependencies<Copy>(5).ToList();
             _sharedContext.DbContext.Set<Copy>().AddRange(copies);
             await _sharedContext.DbContext.SaveChangesAsync();
 
@@ -758,7 +758,7 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddRentalsAsync_ForValidModels_Returns200Ok()
         {
-            var copy = DataGenerator.Get<Copy>(1).First();
+            var copy = DataGenerator.GetWithDependencies<Copy>(1).First();
             _sharedContext.DbContext.Set<Copy>().Add(copy);
             await _sharedContext.DbContext.SaveChangesAsync();
 

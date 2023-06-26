@@ -89,7 +89,7 @@ namespace Application.Services
 
         public async Task BindProfil(string userId, string profileCardNumber, ProfileRequest dto)
         {
-            var user = await _identityContext.Users.Where(user => user.Id == userId).Select(user => new ApplicationUser() { ProfileCardNumber = user.ProfileCardNumber }).FirstOrDefaultAsync();
+            var user = await _identityContext.Users.Where(user => user.Id == userId).Select(user => new ApplicationUser() { ProfileCardNumber = user.ProfileCardNumber, ConcurrencyStamp = user.ConcurrencyStamp }).FirstOrDefaultAsync();
 
             if (user is null)
             {
@@ -104,16 +104,11 @@ namespace Application.Services
             user.Id = userId;
             user.ProfileCardNumber = profileCardNumber;
             user.PhoneNumber = dto.PhoneNumber;
-
+            _identityContext.ChangeTracker.Clear();
             _identityContext.Entry(user).Property(user => user.ProfileCardNumber).IsModified = true;
             _identityContext.Entry(user).Property(user => user.PhoneNumber).IsModified = true;
 
-            var result = await _userManager.UpdateAsync(user);
-
-            if (result.Succeeded is false)
-            {
-                throw new IdentityException(result.Errors);
-            }
+            await _identityContext.SaveChangesAsync();
         }
 
         public async Task<string> GetEmail(string userId)

@@ -42,7 +42,6 @@ namespace Application.Services
             var newProfil = new Profile();
 
             newProfil.UserId = userId;
-            newProfil.ProfileHistory = new ProfileHistory();
 
             await _unitOfWork.Set<Profile>().AddAsync(newProfil);
             await _userService.BindProfil(userId, newProfil.LibraryCardNumber, dto);
@@ -197,7 +196,7 @@ namespace Application.Services
                        .AsNoTracking()
                        .Where(profile => profile.LibraryCardNumber == cardNumber)
                        .ProjectTo<ProfileResponse>(_mapper.ConfigurationProvider)
-                       .Select(response => response.CurrrentReservations)
+                       .Select(response => response.CurrentReservations)
                        .FirstOrDefaultAsync();
 
             if (response is null)

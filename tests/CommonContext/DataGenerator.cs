@@ -5,7 +5,7 @@ using Bogus;
 using Domain.Entities;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Identity;
-using Org.BouncyCastle.Crmf;
+using WebAPI.ApiRoutes;
 using Profile = Domain.Entities.Profile;
 
 namespace CommonContext
@@ -13,6 +13,8 @@ namespace CommonContext
     public static class DataGenerator
     {
         private static readonly Dictionary<Type, dynamic> _generators = new Dictionary<Type, dynamic>();
+        private static readonly Dictionary<Type, dynamic> _generatorsWithDependencies = new Dictionary<Type, dynamic>();
+
         private static readonly Dictionary<Type, Type> _domainTypes = new Dictionary<Type, Type>();
         public static readonly IMapper _mapper;
 
@@ -31,6 +33,10 @@ namespace CommonContext
             _domainTypes[typeof(RoleRequest)] = typeof(IdentityRole);
             _domainTypes[typeof(LibraryRequest)] = typeof(Library);
 
+            SetGenerators();
+        }
+        private static void SetGenerators()
+        {
             var copyHistoryGenerator = new Faker<CopyHistory>();
 
             var itemGenerator = new Faker<Item>()
@@ -71,11 +77,7 @@ namespace CommonContext
                .RuleFor(Library => Library.IsPrinter, faker => faker.Random.Bool())
                .RuleFor(Library => Library.IsPhotocopier, faker => faker.Random.Bool());
 
-            var copyGenerator = new Faker<Copy>()
-                .RuleFor(copy => copy.Item, _ => itemGenerator.Generate())
-                .RuleFor(copy => copy.Library, _ => libraryGenerator.Generate())
-                .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGenerator.Generate());
-
+            var copyGenerator = new Faker<Copy>();
 
             var rentalGenerator = new Faker<Rental>()
                 .RuleFor(rental => rental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-1), DateTime.Now)))
@@ -90,60 +92,16 @@ namespace CommonContext
                .RuleFor(archivalRental => archivalRental.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
                .RuleFor(archivalRental => archivalRental.EndDate, (_, rental) => rental.BeginDate.AddDays(30))
                .RuleFor(archivalRental => archivalRental.ReturnedDate, (faker, rental) => faker.Date.BetweenDateOnly(rental.BeginDate.AddDays(1), rental.BeginDate.AddMonths(1)));
-               
 
             var archivalReservationGenerator = new Faker<ArchivalReservation>()
               .RuleFor(reservation => reservation.BeginDate, faker => DateOnly.FromDateTime(faker.Date.Between(DateTime.Now.AddMonths(-10), DateTime.Now.AddMonths(-1))))
               .RuleFor(reservation => reservation.EndDate, (_, reservation) => reservation.BeginDate.AddDays(7))
               .RuleFor(reservation => reservation.CollectionDate, (faker, reservation) => faker.Date.BetweenDateOnly(reservation.BeginDate.AddDays(1), reservation.EndDate));
 
-            var profileHistoryGenerator = new Faker<ProfileHistory>()
-               .RuleFor(profileHistory => profileHistory.ArchivalRentals, (_, profileHistory) =>
-               {
-                   var archival = archivalRentalGenerator.Generate(1).First();
-
-                   var copyHistory = copyHistoryGenerator.Generate(1).First();
-                   copyHistory.ArchivalRentals = null;
-
-                   archival.CopyHistory = copyHistory;
-                   archival.ProfileHistory = profileHistory;
-                   
-                   return new List<ArchivalRental> { archival };
-               }).RuleFor(profileHistory => profileHistory.ArchivalReservations, (_, profileHistory) =>
-               {
-                   var archival = archivalReservationGenerator.Generate(1).First();
-
-                   archival.CopyHistory = profileHistory.ArchivalRentals.First().CopyHistory;
-                   archival.ProfileHistory = profileHistory;
-
-                   return new List<ArchivalReservation> { archival };
-               });
+            var profileHistoryGenerator = new Faker<ProfileHistory>();
 
             var profileGenerator = new Faker<Profile>()
-               .RuleFor(profile => profile.UserId, faker => "empty_user_id")
-               .RuleFor(profile => profile.ProfileHistory, faker => profileHistoryGenerator.Generate(1).First())
-               .RuleFor(profile => profile.CurrentRentals, _ =>
-               {
-                   var rental = rentalGenerator.Generate(1).First();
-                   rental.Copy = copyGenerator.Generate(1).First();
-                   return new List<Rental> { rental };
-               }).RuleFor(profile => profile.CurrentReservations, _ =>
-               {
-                   var reservation = reservationGenerator.Generate(1).First();
-                   reservation.Copy = copyGenerator.Generate(1).First();
-                   return new List<Reservation> { reservation };
-               });
-
-            copyHistoryGenerator = new Faker<CopyHistory>()
-            .RuleFor(profileHistory => profileHistory.ArchivalRentals, _ =>
-            {
-                var archival = archivalRentalGenerator.Generate(1).First();
-                return new List<ArchivalRental> { archival };
-            }).RuleFor(profileHistory => profileHistory.ArchivalReservations, _ =>
-            {
-                var archival = archivalReservationGenerator.Generate(1).First();
-                return new List<ArchivalReservation> { archival };
-            });
+               .RuleFor(profile => profile.UserId, faker => "empty_user_id");
 
             itemGenerator.UseSeed(100);
             registerRequestGenerator.UseSeed(250);
@@ -172,20 +130,150 @@ namespace CommonContext
             _generators[typeof(ProfileHistory)] = profileHistoryGenerator;
             _generators[typeof(Profile)] = profileGenerator;
             _generators[typeof(CopyHistory)] = copyHistoryGenerator;
-        }
 
+            var copyGeneratorWithDependencies = copyGenerator.Clone();
+            var rentalGeneratorWithDependencies = rentalGenerator.Clone();
+            var archivalRentalGeneratorWithDependencies = archivalRentalGenerator.Clone();
+            var reservationGeneratorWithDependencies = reservationGenerator.Clone();
+            var archivalReservationGeneratorWithDependencies = archivalReservationGenerator.Clone();
+            var profileHistoryGeneratorWithDependencies = profileHistoryGenerator.Clone();
+            var copyHistoryGeneratorWithDependencies = copyHistoryGenerator.Clone();
+            var profileGeneratorWithDependencies = profileGenerator.Clone();
+
+            copyGeneratorWithDependencies
+                .RuleFor(copy => copy.Item, _ => itemGenerator.Generate())
+                .RuleFor(copy => copy.Library, _ => libraryGenerator.Generate())
+                .RuleFor(copy => copy.CopyHistory, _ => copyHistoryGeneratorWithDependencies.Generate());
+
+            rentalGeneratorWithDependencies
+                .RuleFor(rental => rental.Profile, _ => profileGenerator.Generate())
+                .RuleFor(rental => rental.Copy, _ => copyGeneratorWithDependencies.Generate());
+
+            reservationGeneratorWithDependencies
+                .RuleFor(reservation => reservation.Profile, _ => profileGenerator.Generate())
+                .RuleFor(reservation => reservation.Copy, _ => copyGeneratorWithDependencies.Generate());
+
+            archivalRentalGeneratorWithDependencies
+                .RuleFor(rental => rental.ProfileHistory, _ => profileHistoryGenerator.Generate())
+                .RuleFor(rental => rental.CopyHistory, _ => 
+                {
+                    var copyHistory = copyHistoryGenerator.Generate();
+                    copyHistory.Copy = copyGenerator.Generate();
+                    copyHistory.Copy.Item = itemGenerator.Generate();
+                    copyHistory.Copy.Library = libraryGenerator.Generate();
+                    return copyHistory;
+                });
+
+            archivalReservationGeneratorWithDependencies
+                .RuleFor(reservation => reservation.ProfileHistory, _ => profileHistoryGenerator.Generate())
+                .RuleFor(reservation => reservation.CopyHistory, _ =>
+                {
+                    var copyHistory = copyHistoryGenerator.Generate();
+                    copyHistory.Copy = copyGenerator.Generate();
+                    copyHistory.Copy.Item = itemGenerator.Generate();
+                    copyHistory.Copy.Library = libraryGenerator.Generate();
+                    return copyHistory;
+                });
+                
+
+            profileGeneratorWithDependencies
+               .RuleFor(profile => profile.ProfileHistory, faker => 
+               {
+                   var profileHistory = profileHistoryGeneratorWithDependencies.Generate();
+                   return profileHistory;
+               }
+               )
+               .RuleFor(profile => profile.CurrentRentals, (_, currentProfile) =>
+               {
+                   var rental = rentalGeneratorWithDependencies.Generate();
+                   rental.Profile = currentProfile;
+                   return new List<Rental> { rental };
+               }).RuleFor(profile => profile.CurrentReservations, (_, currentProfile) =>
+               {
+                   var reservation = reservationGeneratorWithDependencies.Generate();
+                   reservation.Profile = currentProfile;
+                   return new List<Reservation> { reservation };
+               });
+
+            profileHistoryGeneratorWithDependencies
+               .RuleFor(profileHistory => profileHistory.ArchivalRentals, (_, profileHistory) =>
+               {
+                   var archival = archivalRentalGeneratorWithDependencies.Generate();
+                   archival.ProfileHistory = profileHistory;
+
+                   return new List<ArchivalRental> { archival };
+               }).RuleFor(profileHistory => profileHistory.ArchivalReservations, (_, profileHistory) =>
+               {
+                   var archival = archivalReservationGeneratorWithDependencies.Generate();
+
+                   archival.CopyHistory = profileHistory.ArchivalRentals.First().CopyHistory;
+                   archival.ProfileHistory = profileHistory;
+
+                   return new List<ArchivalReservation> { archival };
+               });
+
+            copyHistoryGeneratorWithDependencies
+            .RuleFor(profileHistory => profileHistory.ArchivalRentals, (_, copyHistory) =>
+            {
+                var archival = archivalRentalGeneratorWithDependencies.Generate();
+                archival.CopyHistory = copyHistory;
+
+                return new List<ArchivalRental> { archival };
+            }).RuleFor(profileHistory => profileHistory.ArchivalReservations, (_, copyHistory) =>
+            {
+                var archival = archivalReservationGeneratorWithDependencies.Generate();
+
+                archival.ProfileHistory = copyHistory.ArchivalRentals.First().ProfileHistory;
+                archival.CopyHistory = copyHistory;
+
+                return new List<ArchivalReservation> { archival };
+            });
+
+            //itemGenerator.UseSeed(100);
+            //registerRequestGenerator.UseSeed(250);
+            //applicationUserGenerator.UseSeed(93842421);
+            //identityRoleGenerator.UseSeed(750);
+            //libraryGenerator.UseSeed(1250);
+            //copyGenerator.UseSeed(91476);
+            //rentalGenerator.UseSeed(38918);
+            //reservationGenerator.UseSeed(2589);
+            //profileGenerator.UseSeed(5819);
+            //profileHistoryGenerator.UseSeed(19353);
+            //archivalRentalGenerator.UseSeed(4715);
+            //archivalReservationGenerator.UseSeed(01743);
+            //copyHistoryGenerator.UseSeed(2752);
+
+            _generatorsWithDependencies[typeof(Copy)] = copyGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(Rental)] = rentalGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(Reservation)] = reservationGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(ArchivalRental)] = archivalRentalGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(ArchivalReservation)] = archivalReservationGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(ProfileHistory)] = profileHistoryGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(Profile)] = profileGeneratorWithDependencies;
+            _generatorsWithDependencies[typeof(CopyHistory)] = copyHistoryGeneratorWithDependencies;
+        }
         public static IEnumerable<T> Get<T>(int number)
         {
             return _generators[typeof(T)].Generate(number);
         }
-
+        public static T GetOne<T>()
+        {
+            return _generators[typeof(T)].Generate();
+        }
+        public static IEnumerable<T> GetWithDependencies<T>(int number)
+        {
+            return _generatorsWithDependencies[typeof(T)].Generate(number);
+        }
+        public static T GetOneWithDependencies<T>()
+        {
+            return _generatorsWithDependencies[typeof(T)].Generate();
+        }
         public static IEnumerable<TRequest> GetRequest<TRequest>(int number)
         {
             var domainEntities = _generators[_domainTypes[typeof(TRequest)]].Generate(number);
 
             return _mapper.Map<IEnumerable<TRequest>>(domainEntities);
         }
-
         public static string GetUserPassword { get; } = "Hn5@68Hhbm*9h2b3h";
         public static string GetOtherUserPassword { get; } = "9jNNbj$@IBYF8Vjdw";
     }

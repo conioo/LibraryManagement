@@ -300,15 +300,15 @@ namespace WebAPITests.Integration
         }
         private Profile GetProfile(ApplicationUser user)
         {
-            var profile = DataGenerator.Get<Profile>(1).First();
+            Profile profile;
 
             if(_options.removeRentalsAndReservationsForTheProfile)
             {
-                profile.CurrentRentals = null;
-                profile.CurrentReservations = null;
-
-                profile.ProfileHistory.ArchivalRentals = null;
-                profile.ProfileHistory.ArchivalReservations = null;
+                profile = DataGenerator.GetOne<Profile>();
+            }
+            else
+            {
+                profile = DataGenerator.GetOneWithDependencies<Profile>();
             }
 
             profile.IsActive = _options.isActiveProfile;

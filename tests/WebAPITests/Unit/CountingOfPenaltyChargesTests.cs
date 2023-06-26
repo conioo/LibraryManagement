@@ -47,9 +47,7 @@ namespace WebAPITests.Unit
 
             _countingOfPenaltyChargesTest = new CountingOfPenaltyChargesTest(serviceProviderMock.Object, _loggerMock.Object, rentalOptionsMock.Object, _emailServiceMock.Object, _unitOfWork);
 
-            _rental = DataGenerator.Get<Rental>(1).First();
-            _rental.Profile = DataGenerator.Get<Profile>(1).First();
-            _rental.Copy = DataGenerator.Get<Copy>(1).First();
+            _rental = DataGenerator.GetOneWithDependencies<Rental>();
 
             _rental.BeginDate = DateOnly.FromDateTime(DateTime.Now);
             _rental.EndDate = _rental.BeginDate.AddDays(30);
