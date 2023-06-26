@@ -1,6 +1,9 @@
-﻿public class UpdateUserRequest
+﻿namespace Application.Dtos.Identity.Request
 {
-    public string? FirstName { get; set; }
-    public string? LastName { get; set; }
-    public string? UserName { get; set; }
+    public class UpdateUserRequest
+    {
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? UserName { get; set; }
+    }
 }
