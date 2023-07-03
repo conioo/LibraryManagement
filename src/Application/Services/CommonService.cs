@@ -43,7 +43,7 @@ namespace Application.Services
             var entities = _unitOfWork.Set<T>()
                 .AsNoTracking();
 
-            var pageResponse = await PagedResponse<TResponse>.GetPagedResponse(entities, sieveModel, _sieveProcessor, _mapper);
+            var pageResponse = await PagedResponse<TResponse>.GetPagedResponseAsync(entities, sieveModel, _sieveProcessor, _mapper);
 
             return pageResponse;
         }
@@ -60,7 +60,10 @@ namespace Application.Services
         }
         public virtual async Task<TResponse> AddAsync(TRequest dto)
         {
-            var entity = _mapper.Map<T>(dto);
+            return await AddAsync(_mapper.Map<T>(dto));
+        }
+        public virtual async Task<TResponse> AddAsync(T entity)
+        {
             await _unitOfWork.Set<T>().AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
 

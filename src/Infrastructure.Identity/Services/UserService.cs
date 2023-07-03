@@ -7,7 +7,6 @@ using AutoMapper;
 using Domain.Interfaces;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
-using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,7 @@ using Sieve.Services;
 using System.Security.Claims;
 using Profile = Domain.Entities.Profile;
 
-namespace Application.Services
+namespace Infrastructure.Identity.Services
 {
     internal class UserService : IdentityCommonService<ApplicationUser, RegisterRequest, UserResponse>, IUserService
     {

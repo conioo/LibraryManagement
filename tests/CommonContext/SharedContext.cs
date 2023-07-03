@@ -1,4 +1,5 @@
-﻿using Application.Dtos.Identity.Request;
+﻿using Application.Dtos;
+using Application.Dtos.Identity.Request;
 using Application.Dtos.Identity.Response;
 using Application.Interfaces;
 using Application.Reactive.Interfaces;
@@ -7,10 +8,12 @@ using Domain.Interfaces;
 using Domain.Settings;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Interfaces;
 using Infrastructure.Identity.Roles;
 using Infrastructure.Persistence.Data;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -146,9 +149,14 @@ namespace WebAPITests.Integration
                 RefreshMock<IEmailService>();
             }
 
-            if(_options.addEndOfReservationMock)
+            if (_options.addEndOfReservationMock)
             {
                 RefreshMock<IEndOfReservation>();
+            }
+
+            if (_options.addFilesServiceMock)
+            {
+                RefreshMock<IFilesService>();
             }
 
             if (_options.addDefaultUser)
@@ -265,6 +273,21 @@ namespace WebAPITests.Integration
 
                     services.AddSingleton(endOfReservationMock.Object);
                 }
+
+                if (_options.addFilesServiceMock)
+                {
+                    var filesService = services.Single(service => service.ServiceType == typeof(IFilesService));
+
+                    services.Remove(filesService);
+
+                    var filesServiceMock = new Mock<IFilesService>();
+
+                    filesServiceMock.Setup(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>())).Returns((ICollection<IFormFile> list) => Task.FromResult((ICollection<string>)new List<string>() { "nameMock" }));
+
+                    Mocks[typeof(IFilesService)] = filesServiceMock;
+
+                    services.AddSingleton(filesServiceMock.Object);
+                }
             });
         }
 
@@ -302,7 +325,7 @@ namespace WebAPITests.Integration
         {
             Profile profile;
 
-            if(_options.removeRentalsAndReservationsForTheProfile)
+            if (_options.removeRentalsAndReservationsForTheProfile)
             {
                 profile = DataGenerator.GetOne<Profile>();
             }
@@ -326,7 +349,7 @@ namespace WebAPITests.Integration
         }
         public async Task<ApplicationUser> GetBasicConfirmUser()
         {
-            var user = DataGenerator.Get<ApplicationUser>(1).First(); 
+            var user = DataGenerator.Get<ApplicationUser>(1).First();
 
             await UserManager.CreateAsync(user, DataGenerator.GetUserPassword);
 

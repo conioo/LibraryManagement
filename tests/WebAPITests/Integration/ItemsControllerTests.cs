@@ -3,10 +3,15 @@ using Application.Dtos.Response;
 using CommonContext;
 using Domain.Entities;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using Sieve.Models;
 using System.Net.Http.Json;
+using System.Reflection;
+using System.Text;
 using WebAPI.ApiRoutes;
 using WebAPITests.Integration.SharedContextBuilders;
 
@@ -18,6 +23,7 @@ namespace WebAPITests.Integration
         private IEnumerable<Copy>? _copies;
         private readonly IEnumerable<Item> _items;
         private readonly SharedContext _sharedContext;
+
 
         public ItemsControllerTests(ItemContextBuilder sharedContextBuilder)
         {
@@ -35,15 +41,16 @@ namespace WebAPITests.Integration
         [Fact]
         async Task AddItemAsync_ForInvalidModel_Returns400BadRequest()
         {
-            var itemRequest = DataGenerator.GetRequest<ItemRequest>(1).First();
-
+            var itemRequest = DataGenerator.GetOne<ItemRequest>();
             itemRequest.Title = "";
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContent(itemRequest);
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(_client.BaseAddress + Items.AddItem),
-                Content = JsonContent.Create(itemRequest)
+                Content = formDataContent,
             };
 
             var response = await _client.SendAsync(request);
@@ -55,16 +62,19 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
         }
 
+        // dla zdjec i bez
         [Fact]
         async Task AddItemAsync_ForValidModel_Returns201Created()
         {
-            var itemRequest = DataGenerator.GetRequest<ItemRequest>(1).First();
+            var itemRequest = DataGenerator.GetOne<ItemRequest>();
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContent(itemRequest);
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(_client.BaseAddress + Items.AddItem),
-                Content = JsonContent.Create(itemRequest)
+                Content = formDataContent
             };
 
             var response = await _client.SendAsync(request);

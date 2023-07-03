@@ -4,7 +4,9 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace Infrastructure.Persistence.Data
 {
@@ -13,6 +15,7 @@ namespace Infrastructure.Persistence.Data
         private readonly IConfiguration _configuration;
         private readonly IUserResolverService _userResolverService;
         public DbSet<Item> Items { get; set; }
+        public DbSet<FileDetails> Files { get; set; }
         public DbSet<Copy> Copies { get; set; }
         public DbSet<Library> Libraries { get; set; }
         public DbSet<Profile> Profiles { get; set; }
@@ -47,10 +50,16 @@ namespace Infrastructure.Persistence.Data
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
                 entityBuilder.Property(entity => entity.Title).HasMaxLength(50);
-
+                entityBuilder.Property(entity => entity.ImagePaths)
+                    .HasConversion(new ValueConverter<ICollection<string>?, string>(list => JsonConvert.SerializeObject(list), obj => JsonConvert.DeserializeObject<ICollection<string>?>(obj)));
             });
 
             builder.Entity<Library>(entityBuilder =>
+            {
+                entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
+            });
+
+            builder.Entity<FileDetails>(entityBuilder =>
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
             });

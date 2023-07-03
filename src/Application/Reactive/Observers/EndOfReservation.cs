@@ -15,7 +15,7 @@ namespace Application.Reactive.Observers
         private readonly ReservationSettings _reservationOptions;
         private readonly ILogger<EndOfReservation> _logger;
 
-        private IDictionary<DateOnly, List<Copy>> _copies = new Dictionary<DateOnly, List<Copy>>();
+        private IDictionary<DateOnly, List<Copy>> _copies = new Dictionary<DateOnly, List<Copy>>();//end reservation
 
         public EndOfReservation(IServiceProvider serviceProvider,/* IOptions<ReservationSettings> options,*/ ILogger<EndOfReservation> logger, IOptions<RentalSettings> ren)
         {

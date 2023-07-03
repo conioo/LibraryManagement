@@ -5,8 +5,8 @@ using Application.Exceptions;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Profile = Domain.Entities.Profile;
@@ -56,7 +56,7 @@ namespace Application.Services
         }
         public async Task ActivationProfileAsync(string cardNumber)
         {
-            var profileInfo = await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).Select(profile => new { profile.IsActive }).FirstOrDefaultAsync();
+            var profileInfo = await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).Select(profile => new { profile.IsActive, profile.UserId }).FirstOrDefaultAsync();
 
             if (profileInfo is null)
             {
@@ -70,7 +70,6 @@ namespace Application.Services
 
             //await _unitOfWork.Set<Profile>().Where(profile => profile.LibraryCardNumber == cardNumber).ExecuteUpdateAsync(p => p.SetProperty(profile => profile.IsActive, profile => true));
             var modifiedProfile = new Profile() { LibraryCardNumber = cardNumber, IsActive = true };
-
             _unitOfWork.Set<Profile>().Entry(modifiedProfile).Property(profile => profile.IsActive).IsModified = true;
 
             await _unitOfWork.SaveChangesAsync();

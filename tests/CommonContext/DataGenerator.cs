@@ -4,8 +4,11 @@ using AutoMapper;
 using Bogus;
 using Domain.Entities;
 using Infrastructure.Identity.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using WebAPI.ApiRoutes;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Reflection;
 using Profile = Domain.Entities.Profile;
 
 namespace CommonContext
@@ -18,6 +21,35 @@ namespace CommonContext
         private static readonly Dictionary<Type, Type> _domainTypes = new Dictionary<Type, Type>();
         public static readonly IMapper _mapper;
 
+        private static IFormFile? imageFormFile = null;
+        public static IFormFile GetImageFormFile
+        {
+            get
+            {
+                if(imageFormFile is not null)
+                {
+                    return imageFormFile;
+                }
+                
+                Bitmap image = new Bitmap(200, 200);
+                using (Graphics graphics = Graphics.FromImage(image))
+                {
+                    graphics.Clear(Color.Blue);
+                }
+
+                var memoryStream = new MemoryStream();
+                image.Save(memoryStream, ImageFormat.Png);
+                //memoryStream.Position = 0;
+
+                imageFormFile = new FormFile(memoryStream, 0, memoryStream.Length, "", "image.png")
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = "image/png"
+                };
+
+                return imageFormFile;
+            }
+        }
         static DataGenerator()
         {
             var mapperConfiguration = new MapperConfiguration(config =>
@@ -29,7 +61,7 @@ namespace CommonContext
 
             _mapper = mapperConfiguration.CreateMapper();
 
-            _domainTypes[typeof(ItemRequest)] = typeof(Item);
+            //_domainTypes[typeof(ItemRequest)] = typeof(Item);
             _domainTypes[typeof(RoleRequest)] = typeof(IdentityRole);
             _domainTypes[typeof(LibraryRequest)] = typeof(Library);
 
@@ -46,7 +78,18 @@ namespace CommonContext
                 .RuleFor(item => item.Authors, faker => faker.Person.FullName)
                 .RuleFor(item => item.Publisher, faker => faker.Company.CompanyName())
                 .RuleFor(item => item.YearOfPublication, faker => faker.Random.Int(1600, 2022))
-                .RuleFor(item => item.ISBN, faker => faker.Commerce.Ean13());
+                .RuleFor(item => item.ISBN, faker => faker.Commerce.Ean13())
+                .RuleFor(item => item.ImagePaths, _ => new List<string>() { "fakeImage.png"});
+
+            var itemRequestGenerator = new Faker<ItemRequest>()
+                .RuleFor(itemRequest => itemRequest.Title, faker => faker.Commerce.ProductName())
+                .RuleFor(itemRequest => itemRequest.Description, faker => faker.Commerce.ProductDescription())
+                .RuleFor(itemRequest => itemRequest.FormOfPublication, faker => faker.PickRandom<Form>())
+                .RuleFor(itemRequest => itemRequest.Authors, faker => faker.Person.FullName)
+                .RuleFor(itemRequest => itemRequest.Publisher, faker => faker.Company.CompanyName())
+                .RuleFor(itemRequest => itemRequest.YearOfPublication, faker => faker.Random.Int(1600, 2022))
+                .RuleFor(itemRequest => itemRequest.ISBN, faker => faker.Commerce.Ean13())
+                .RuleFor(itemRequest => itemRequest.Images, _ => new List<IFormFile>() { GetImageFormFile });
 
             var registerRequestGenerator = new Faker<RegisterRequest>()
                 .RuleFor(registerRequest => registerRequest.FirstName, faker => faker.Person.FirstName)
@@ -118,6 +161,7 @@ namespace CommonContext
             copyHistoryGenerator.UseSeed(2752);
 
             _generators[typeof(Item)] = itemGenerator;
+            _generators[typeof(ItemRequest)] = itemRequestGenerator;
             _generators[typeof(RegisterRequest)] = registerRequestGenerator;
             _generators[typeof(ApplicationUser)] = applicationUserGenerator;
             _generators[typeof(IdentityRole)] = identityRoleGenerator;
@@ -155,7 +199,7 @@ namespace CommonContext
 
             archivalRentalGeneratorWithDependencies
                 .RuleFor(rental => rental.ProfileHistory, _ => profileHistoryGenerator.Generate())
-                .RuleFor(rental => rental.CopyHistory, _ => 
+                .RuleFor(rental => rental.CopyHistory, _ =>
                 {
                     var copyHistory = copyHistoryGenerator.Generate();
                     copyHistory.Copy = copyGenerator.Generate();
@@ -174,10 +218,10 @@ namespace CommonContext
                     copyHistory.Copy.Library = libraryGenerator.Generate();
                     return copyHistory;
                 });
-                
+
 
             profileGeneratorWithDependencies
-               .RuleFor(profile => profile.ProfileHistory, faker => 
+               .RuleFor(profile => profile.ProfileHistory, faker =>
                {
                    var profileHistory = profileHistoryGeneratorWithDependencies.Generate();
                    return profileHistory;
@@ -252,6 +296,15 @@ namespace CommonContext
             _generatorsWithDependencies[typeof(Profile)] = profileGeneratorWithDependencies;
             _generatorsWithDependencies[typeof(CopyHistory)] = copyHistoryGeneratorWithDependencies;
         }
+        private static byte[] ReadFileBytes(IFormFile file)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                file.CopyTo(memoryStream);
+                return memoryStream.ToArray();
+            }
+        }
+
         public static IEnumerable<T> Get<T>(int number)
         {
             return _generators[typeof(T)].Generate(number);
@@ -273,6 +326,36 @@ namespace CommonContext
             var domainEntities = _generators[_domainTypes[typeof(TRequest)]].Generate(number);
 
             return _mapper.Map<IEnumerable<TRequest>>(domainEntities);
+        }
+        public static MultipartFormDataContent GetMultipartFormDataContent<T>(T model)
+        {
+            MultipartFormDataContent formData = new MultipartFormDataContent();
+
+            foreach (PropertyInfo propertyInfo in typeof(T).GetProperties())
+            {
+                object? value = propertyInfo.GetValue(model);
+
+                if (value is null)
+                {
+                    continue;
+                }
+
+                if (value is ICollection<IFormFile> fileCollection)
+                {
+                    foreach (var file in fileCollection)
+                    {
+                        var fileContent = new ByteArrayContent(ReadFileBytes(file));
+                        formData.Add(fileContent, propertyInfo.Name, file.FileName);
+                    }
+                }
+                else
+                {
+                    var stringContent = new StringContent(value.ToString());
+                    formData.Add(stringContent, propertyInfo.Name);
+                }
+            }
+
+            return formData;
         }
         public static string GetUserPassword { get; } = "Hn5@68Hhbm*9h2b3h";
         public static string GetOtherUserPassword { get; } = "9jNNbj$@IBYF8Vjdw";

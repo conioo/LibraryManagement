@@ -13,7 +13,7 @@ using Sieve.Services;
 using System.Data;
 using System.Diagnostics;
 
-namespace Application.Services
+namespace Infrastructure.Identity.Services
 {
     internal class RoleService : IdentityCommonService<IdentityRole, RoleRequest, RoleResponse>, IRoleService
     {

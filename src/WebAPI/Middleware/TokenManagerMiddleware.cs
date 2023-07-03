@@ -1,5 +1,5 @@
 ﻿using Application.Exceptions;
-using Application.Interfaces;
+using Infrastructure.Identity.Interfaces;
 using Microsoft.Extensions.Primitives;
 
 namespace WebAPI.Middleware

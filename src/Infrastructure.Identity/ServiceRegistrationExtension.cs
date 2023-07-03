@@ -2,6 +2,7 @@
 using Application.Services;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Interfaces;
 using Infrastructure.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;

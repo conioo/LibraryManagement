@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Identity.Entities;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace Application.Interfaces
+namespace Infrastructure.Identity.Interfaces
 {
     public interface IJwtService
     {

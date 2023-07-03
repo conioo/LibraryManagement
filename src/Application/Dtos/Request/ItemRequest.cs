@@ -1,4 +1,6 @@
-﻿namespace Application.Dtos.Request
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Application.Dtos.Request
 {
     public class ItemRequest
     {
@@ -9,5 +11,6 @@
         public string? Publisher { get; set; }
         public int? YearOfPublication { get; set; }
         public string? ISBN { get; set; }
+        public ICollection<IFormFile>? Images { get; set; }
     }
 }

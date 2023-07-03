@@ -1,4 +1,5 @@
-﻿using Domain.Settings;
+﻿using Application.Dtos.Identity.Request;
+using Domain.Settings;
 using FluentValidation;
 using Microsoft.Extensions.Options;
 

@@ -8,6 +8,7 @@ using Domain.Settings;
 using Infrastructure.Identity.Data;
 using Infrastructure.Identity.Entities;
 using Infrastructure.Identity.Extensions;
+using Infrastructure.Identity.Interfaces;
 using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -17,7 +18,7 @@ using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Application.Services
+namespace Infrastructure.Identity.Services
 {
     internal class AccountService : IAccountService
     {

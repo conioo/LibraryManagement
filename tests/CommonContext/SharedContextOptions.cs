@@ -10,6 +10,8 @@
 
         public bool addEmailServiceMock = false;
 
+        public bool addFilesServiceMock = false;
+
         public bool addCountingOfPenaltyChargesMock = false;
 
         public bool addEndOfReservationMock = false;

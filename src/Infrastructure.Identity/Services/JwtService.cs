@@ -1,6 +1,6 @@
-﻿using Application.Interfaces;
-using Domain.Settings;
+﻿using Domain.Settings;
 using Infrastructure.Identity.Entities;
+using Infrastructure.Identity.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Distributed;
@@ -11,7 +11,7 @@ using System.Security.Claims;
 using System.Text;
 
 // regenerate jwt z httpcontext
-namespace Application.Services
+namespace Infrastructure.Identity.Services
 {
     internal class JwtService : IJwtService
     {
@@ -57,7 +57,7 @@ namespace Application.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("ProfileCardNumber", user.ProfileCardNumber is null?"":user.ProfileCardNumber),
+                new Claim("ProfileCardNumber", user.ProfileCardNumber is null?"":user.ProfileCardNumber),//jesli aktywny
             }).ToList();
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.IssuerSigningKey));

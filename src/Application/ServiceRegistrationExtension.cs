@@ -27,11 +27,10 @@ namespace Application
             services.AddScoped<ILibraryService, LibraryService>();
             services.AddScoped<ICopyService, CopyService>();
             services.AddScoped<IProfileService, ProfileService>();
-
             services.AddScoped<IRentalService, RentalService>();
 
             services.AddSingleton<IEmailService, EmailService>();
-
+            services.AddSingleton<IFilesService, FilesService>();
 
             services.AddHttpContextAccessor();
 

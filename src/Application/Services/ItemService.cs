@@ -10,15 +10,32 @@ using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Sieve.Services;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Application.Services
 {
     internal class ItemService : CommonService<Item, ItemRequest, ItemResponse>, IItemService
     {
-        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<ItemService> logger, IUserResolverService userResolverService) : base(unitOfWork, mapper, sieveProcessor, logger, userResolverService)
-        { }
+        private readonly IFilesService _filesService;
 
+        public ItemService(IUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor, ILogger<ItemService> logger, IUserResolverService userResolverService, IFilesService filesSevice) : base(unitOfWork, mapper, sieveProcessor, logger, userResolverService)
+        {
+            _filesService = filesSevice;
+        }
+
+        public async override Task<ItemResponse> AddAsync(ItemRequest dto)
+        {
+            if(dto.Images is not null)
+            {
+                var fileNames = await _filesService.SaveFilesAsync(dto.Images);
+                var newItem = new Item() { ImagePaths = fileNames };
+
+                return await base.AddAsync(newItem);
+            }
+            else
+            {
+                return await base.AddAsync(dto);
+            }
+        }
         public async Task<IEnumerable<CopyResponse>> GetAllCopiesAsync(string id)
         {
             var response = await _unitOfWork.Set<Item>()

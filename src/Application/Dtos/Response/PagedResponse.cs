@@ -17,7 +17,7 @@ namespace Application.Dtos.Response
         {
         }
 
-        public static async Task<PagedResponse<TResponse>> GetPagedResponse<T>(IQueryable<T> entities, SieveModel sieveModel, ISieveProcessor sieveProcessor, IMapper mapper)
+        public static async Task<PagedResponse<TResponse>> GetPagedResponseAsync<T>(IQueryable<T> entities, SieveModel sieveModel, ISieveProcessor sieveProcessor, IMapper mapper)
         {
             // filtering, sorting
             var targetEntities = sieveProcessor
@@ -35,7 +35,7 @@ namespace Application.Dtos.Response
 
             pagedResponse.Items = entityPage;
             pagedResponse.TotalItemsCount = totalCount;
-            pagedResponse.TotalPages = (int)Math.Ceiling(totalCount / (double)sieveModel.PageSize.Value);
+            pagedResponse.TotalPages = (int)Math.Ceiling(totalCount / (decimal)(sieveModel.PageSize ?? totalCount));
 
             return pagedResponse;
         }

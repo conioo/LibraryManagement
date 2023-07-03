@@ -38,10 +38,10 @@ namespace Application.Services
 
         private ArchivalRental GetArchivalRental(Rental rental, string copyHistoryId, string profileHistoryId)
         {
-            return GetArchivalRental(rental, copyHistoryId, profileHistoryId, new CopyHistory() { Id = copyHistoryId }, new ProfileHistory() { Id = profileHistoryId });
+            return GetArchivalRental(rental, new CopyHistory() { Id = copyHistoryId }, new ProfileHistory() { Id = profileHistoryId });
         }
 
-        private ArchivalRental GetArchivalRental(Rental rental, string copyHistoryId, string profileHistoryId, CopyHistory referenceToCopyHistory, ProfileHistory referenceToProfileHistory)
+        private ArchivalRental GetArchivalRental(Rental rental, CopyHistory referenceToCopyHistory, ProfileHistory referenceToProfileHistory)
         {
             _unitOfWork.Set<CopyHistory>().Attach(referenceToCopyHistory);
             _unitOfWork.Set<ProfileHistory>().Attach(referenceToProfileHistory);
@@ -261,7 +261,7 @@ namespace Application.Services
 
             _countingOfPenaltyCharges.ReturnOfItem(rental);
 
-            _logger.LogWarning($"Removed rental: {rental.Id}");
+            _logger.LogWarning("Removed rental: {rentalId}", rental.Id);
         }
         public async Task RenewalAsync(string id)
         {
@@ -343,8 +343,6 @@ namespace Application.Services
             string result = string.Empty;
             var copyHistoriesAttached = new Dictionary<string, CopyHistory>();
             var profileHistoriesAttached = new Dictionary<string, ProfileHistory>();
-            CopyHistory? referenceToCopyHistory;
-            ProfileHistory? referenceToProfileHistory;
 
             foreach (var id in ids)
             {
@@ -364,21 +362,21 @@ namespace Application.Services
                     continue;
                 }
 
-                if (copyHistoriesAttached.TryGetValue(rentalInfo.CopyHistoryId, out referenceToCopyHistory) is false)
+                if (copyHistoriesAttached.TryGetValue(rentalInfo.CopyHistoryId, out var referenceToCopyHistory) is false)
                 {
                     referenceToCopyHistory = new CopyHistory() { Id = rentalInfo.CopyHistoryId };
                     _unitOfWork.Set<CopyHistory>().Attach(referenceToCopyHistory);
                     copyHistoriesAttached.Add(rentalInfo.CopyHistoryId, referenceToCopyHistory);
                 }
 
-                if (profileHistoriesAttached.TryGetValue(rentalInfo.ProfileHistoryId, out referenceToProfileHistory) is false)
+                if (profileHistoriesAttached.TryGetValue(rentalInfo.ProfileHistoryId, out var referenceToProfileHistory) is false)
                 {
                     referenceToProfileHistory = new ProfileHistory() { Id = rentalInfo.ProfileHistoryId };
                     _unitOfWork.Set<ProfileHistory>().Attach(referenceToProfileHistory);
                     profileHistoriesAttached.Add(rentalInfo.ProfileHistoryId, referenceToProfileHistory);
                 }
 
-                var archivalRental = GetArchivalRental(rentalInfo.rental, rentalInfo.CopyHistoryId, rentalInfo.ProfileHistoryId, referenceToCopyHistory, referenceToProfileHistory);
+                var archivalRental = GetArchivalRental(rentalInfo.rental, referenceToCopyHistory, referenceToProfileHistory);
 
                 archivalRentalsToAdded.Add(archivalRental);
 

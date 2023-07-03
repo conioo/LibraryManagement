@@ -9,7 +9,6 @@ namespace Application.Interfaces
     {
         public Task<UserResponse> GetUserAsync(ClaimsPrincipal principal);
         public Task UpdateAsync(ClaimsPrincipal principal, UpdateUserRequest dto);
-
         public Task BindProfil(string userId, string profileCardNumber, ProfileRequest dto);
         public Task<string> GetEmail(string userId);
     }

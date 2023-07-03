@@ -1,6 +1,7 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
+using Domain.Common;
 using Domain.Settings;
 using Infrastructure.Identity.Roles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -92,7 +93,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddItemAsync([FromBody] ItemRequest dto)
+        public async Task<IActionResult> AddItemAsync([FromForm]ItemRequest dto)
         {
             var createdItem = await _service.AddAsync(dto);
 
@@ -106,7 +107,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddItemsAsync([FromBody] IEnumerable<ItemRequest> dtos)
+        public async Task<IActionResult> AddItemsAsync([FromForm]IEnumerable<ItemRequest> dtos)
         {
             await _service.AddRangeAsync(dtos);
 
@@ -120,7 +121,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> UpdateItemAsync([FromQuery] string id, [FromBody] ItemRequest dto)
+        public async Task<IActionResult> UpdateItemAsync([FromQuery] string id, [FromForm] ItemRequest dto)
         {
             await _service.UpdateAsync(id, dto);
 

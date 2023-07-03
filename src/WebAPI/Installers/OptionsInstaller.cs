@@ -20,6 +20,8 @@ namespace WebAPI.Installers
 
             services.AddOptions<ReservationSettings>().Bind(configuration.GetSection("Application").GetSection("Reservation"));
             services.AddOptions<RentalSettings>().Bind(configuration.GetSection("Application").GetSection("Rental"));
+
+            services.AddOptions<PathSettings>().Bind(configuration.GetSection("Application").GetSection("Paths"));
         }
     }
 }
