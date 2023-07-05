@@ -13,5 +13,6 @@ namespace Application.Dtos.Response
         public string? Publisher { get; set; }
         public int? YearOfPublication { get; set; }
         public string? ISBN { get; set; }
+        public ICollection<string>? ImagePaths { get; set; }
     }
 }

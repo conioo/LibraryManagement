@@ -15,11 +15,16 @@ namespace Application.Mappings
             CreateMap<ItemRequest, Item>()
                  .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
+            CreateMap<UpdateItemRequest, Item>()
+                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
             CreateMap<LibraryRequest, Library>()
                  .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<ItemRequest, ItemResponse>();
             CreateMap<Item, ItemResponse>();
+
+            CreateMap<UpdateItemRequest, ItemRequest>();
 
             CreateMap<Library, LibraryResponse>();
 

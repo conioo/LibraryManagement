@@ -107,7 +107,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddItemsAsync([FromForm]IEnumerable<ItemRequest> dtos)
+        public async Task<IActionResult> AddItemsAsync([FromForm]ICollection<ItemRequest> dtos)
         {
             await _service.AddRangeAsync(dtos);
 
@@ -121,7 +121,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> UpdateItemAsync([FromQuery] string id, [FromForm] ItemRequest dto)
+        public async Task<IActionResult> UpdateItemAsync([FromQuery] string id, [FromForm] UpdateItemRequest dto)
         {
             await _service.UpdateAsync(id, dto);
 

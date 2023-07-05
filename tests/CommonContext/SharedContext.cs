@@ -175,7 +175,7 @@ namespace WebAPITests.Integration
         public void RefreshMock<T>() where T : class
         {
             var service = GetMock<T>();
-            service.Reset();
+            service.Invocations.Clear();
         }
 
         public Mock<T> GetMock<T>() where T : class
@@ -282,7 +282,7 @@ namespace WebAPITests.Integration
 
                     var filesServiceMock = new Mock<IFilesService>();
 
-                    filesServiceMock.Setup(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>())).Returns((ICollection<IFormFile> list) => Task.FromResult((ICollection<string>)new List<string>() { "nameMock" }));
+                    filesServiceMock.Setup(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>())).Returns((ICollection<IFormFile> list) => Task.FromResult((ICollection<string>)new List<string>() { "C:\\mock.png" }));
 
                     Mocks[typeof(IFilesService)] = filesServiceMock;
 

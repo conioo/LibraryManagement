@@ -6,5 +6,7 @@ namespace Application.Interfaces
     {
         public Task<string> SaveFileAsync(IFormFile file);
         public Task<ICollection<string>> SaveFilesAsync(ICollection<IFormFile> files);
+        public void RemoveFile(string fileName);
+        public void RemoveFiles(ICollection<string> fileNames);
     }
 }

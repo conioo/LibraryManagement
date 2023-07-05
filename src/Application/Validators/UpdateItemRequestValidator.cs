@@ -3,12 +3,12 @@ using FluentValidation;
 
 namespace Application.Validators
 {
-    public class ItemRequestValidator : AbstractValidator<ItemRequest>
+    public class UpdateItemRequestValidator : AbstractValidator<UpdateItemRequest>
     {
-        public ItemRequestValidator()
+        public UpdateItemRequestValidator()
         {
             RuleFor(model => model.Title)
-                .MinimumLength(1);
+                .MinimumLength(1);//czy null przechodzi
 
             RuleFor(model => model.FormOfPublication)
                 .IsInEnum();

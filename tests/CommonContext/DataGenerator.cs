@@ -21,35 +21,8 @@ namespace CommonContext
         private static readonly Dictionary<Type, Type> _domainTypes = new Dictionary<Type, Type>();
         public static readonly IMapper _mapper;
 
-        private static IFormFile? imageFormFile = null;
-        public static IFormFile GetImageFormFile
-        {
-            get
-            {
-                if(imageFormFile is not null)
-                {
-                    return imageFormFile;
-                }
-                
-                Bitmap image = new Bitmap(200, 200);
-                using (Graphics graphics = Graphics.FromImage(image))
-                {
-                    graphics.Clear(Color.Blue);
-                }
+        private static IFormFile? _imageFormFile = null;
 
-                var memoryStream = new MemoryStream();
-                image.Save(memoryStream, ImageFormat.Png);
-                //memoryStream.Position = 0;
-
-                imageFormFile = new FormFile(memoryStream, 0, memoryStream.Length, "", "image.png")
-                {
-                    Headers = new HeaderDictionary(),
-                    ContentType = "image/png"
-                };
-
-                return imageFormFile;
-            }
-        }
         static DataGenerator()
         {
             var mapperConfiguration = new MapperConfiguration(config =>
@@ -79,7 +52,7 @@ namespace CommonContext
                 .RuleFor(item => item.Publisher, faker => faker.Company.CompanyName())
                 .RuleFor(item => item.YearOfPublication, faker => faker.Random.Int(1600, 2022))
                 .RuleFor(item => item.ISBN, faker => faker.Commerce.Ean13())
-                .RuleFor(item => item.ImagePaths, _ => new List<string>() { "fakeImage.png"});
+                .RuleFor(item => item.ImagePaths, _ => new List<string>() { "fakeImage.png" });
 
             var itemRequestGenerator = new Faker<ItemRequest>()
                 .RuleFor(itemRequest => itemRequest.Title, faker => faker.Commerce.ProductName())
@@ -89,7 +62,7 @@ namespace CommonContext
                 .RuleFor(itemRequest => itemRequest.Publisher, faker => faker.Company.CompanyName())
                 .RuleFor(itemRequest => itemRequest.YearOfPublication, faker => faker.Random.Int(1600, 2022))
                 .RuleFor(itemRequest => itemRequest.ISBN, faker => faker.Commerce.Ean13())
-                .RuleFor(itemRequest => itemRequest.Images, _ => new List<IFormFile>() { GetImageFormFile });
+                .RuleFor(itemRequest => itemRequest.Images, _ => new List<IFormFile>() { GetImageFormFile() });
 
             var registerRequestGenerator = new Faker<RegisterRequest>()
                 .RuleFor(registerRequest => registerRequest.FirstName, faker => faker.Person.FirstName)
@@ -345,7 +318,7 @@ namespace CommonContext
                     foreach (var file in fileCollection)
                     {
                         var fileContent = new ByteArrayContent(ReadFileBytes(file));
-                        formData.Add(fileContent, propertyInfo.Name, file.FileName);
+                        formData.Add(fileContent, propertyInfo.Name, file.FileName);//sprawdzic
                     }
                 }
                 else
@@ -356,6 +329,83 @@ namespace CommonContext
             }
 
             return formData;
+        }
+        public static MultipartFormDataContent GetMultipartFormDataContentFromCollection<T>(ICollection<T> models, string collectionName)
+        {
+            MultipartFormDataContent formData = new MultipartFormDataContent();
+
+            var properties = typeof(T).GetProperties();
+            var i = 0;
+
+            foreach (var model in models)
+            {
+                foreach (var propertyInfo in properties)
+                {
+                    var value = propertyInfo.GetValue(model);
+
+                    if (value is null)
+                    {
+                        continue;
+                    }
+
+                    if (value is ICollection<IFormFile> fileCollection)
+                    {
+                        foreach (var file in fileCollection)
+                        {
+                            var fileContent = new ByteArrayContent(ReadFileBytes(file));
+
+                            formData.Add(fileContent, $"{collectionName}[{i}].{propertyInfo.Name}", file.FileName);
+                        }
+                    }
+                    else
+                    {
+                        var stringContent = new StringContent(value.ToString());
+
+                        formData.Add(stringContent, $"{collectionName}[{i}].{propertyInfo.Name}");
+                    }
+                }
+
+                i++;
+            }
+
+            return formData;
+        }
+        public static IFormFile GetImageFormFile()
+        {
+            if (_imageFormFile is not null)
+            {
+                return _imageFormFile;
+            }
+
+            _imageFormFile = GetImageFormFile("image.png");
+
+            return _imageFormFile;
+        }
+        public static IFormFile GetImageFormFile(string fileName)
+        {
+            return GetImageFormFile(fileName, Color.Blue);
+        }
+        public static IFormFile GetImageFormFile(string fileName, Color color)
+        {
+            Bitmap image = new Bitmap(200, 200);
+
+            using (Graphics graphics = Graphics.FromImage(image))
+            {
+                graphics.Clear(color);
+            }
+
+            var memoryStream = new MemoryStream();
+            image.Save(memoryStream, ImageFormat.Png);
+            //memoryStream.Position = 0;
+
+            var imageFormFile = new FormFile(memoryStream, 0, memoryStream.Length, "", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "image/png"
+            };
+
+            return imageFormFile;
+
         }
         public static string GetUserPassword { get; } = "Hn5@68Hhbm*9h2b3h";
         public static string GetOtherUserPassword { get; } = "9jNNbj$@IBYF8Vjdw";

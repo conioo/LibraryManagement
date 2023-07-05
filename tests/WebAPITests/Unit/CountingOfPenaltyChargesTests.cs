@@ -31,10 +31,10 @@ namespace WebAPITests.Unit
 
             var serviceProviderMock = new Mock<IServiceProvider>();
 
-            var rentalSettingsMock = new Mock<RentalSettings>();
+            //var rentalSettingsMock = new Mock<RentalSettings>();
 
-            rentalSettingsMock.SetupProperty(obj => obj.PenaltyChargePerDay, 1);
-            rentalSettingsMock.SetupProperty(obj => obj.TimeInDays, 30);
+            //rentalSettingsMock.SetupProperty(obj => obj.PenaltyChargePerDay, 1);
+            //rentalSettingsMock.SetupProperty(obj => obj.TimeInDays, 30);
 
             var rentalOptionsMock = new Mock<IOptions<RentalSettings>>();
 

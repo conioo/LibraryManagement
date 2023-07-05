@@ -1,10 +1,10 @@
-﻿using Application.Interfaces;
+﻿using Application.Exceptions;
+using Application.Interfaces;
 using Domain.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System;
 
 namespace Application.Services
 {
@@ -13,12 +13,15 @@ namespace Application.Services
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<FilesService> _logger;
         private readonly PathSettings _pathSettings;
+        private readonly string _itemImagesDirectoryPath;
 
         public FilesService(IWebHostEnvironment environment, IOptions<PathSettings> options, ILogger<FilesService> logger)
         {
             _environment = environment;
             _logger = logger;
             _pathSettings = options.Value;
+
+            _itemImagesDirectoryPath = Path.Combine(_environment.WebRootPath, _pathSettings.PathForImagesOfItems);
         }
         private string GetUniqueFileName(string fileName)
         {
@@ -32,23 +35,75 @@ namespace Application.Services
         {
             var uniqueFileName = GetUniqueFileName(file.FileName);
 
-            var filePath = Path.Combine(_environment.WebRootPath, _pathSettings.PathForImagesOfItems, uniqueFileName);
+            if (Directory.Exists(_itemImagesDirectoryPath) is false)
+            {
+                Directory.CreateDirectory(_itemImagesDirectoryPath);
+            }
 
-            
-            //Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            var filePath = Path.Combine(_itemImagesDirectoryPath, uniqueFileName);
 
-            await file.CopyToAsync(new FileStream(filePath, FileMode.Create));
-
-            // do bazy danych
-
-
+            using(var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
 
             return uniqueFileName;
         }
 
-        public Task<ICollection<string>> SaveFilesAsync(ICollection<IFormFile> files)
+        public async Task<ICollection<string>> SaveFilesAsync(ICollection<IFormFile> files)
         {
-            throw new NotImplementedException();
+            if (Directory.Exists(_itemImagesDirectoryPath) is false)
+            {
+                Directory.CreateDirectory(_itemImagesDirectoryPath);
+            }
+
+            var fileNames = new List<string>();
+
+            foreach (var file in files)
+            {
+                if(file is null)
+                {
+                    continue;
+                }
+
+                var uniqueFileName = GetUniqueFileName(file.FileName);
+
+                var filePath = Path.Combine(_itemImagesDirectoryPath, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                fileNames.Add(uniqueFileName);
+            }
+
+            return fileNames;
+        }
+        public void RemoveFile(string fileName)
+        {
+            if (Directory.Exists(_itemImagesDirectoryPath) is false)
+            {
+                throw new ApiException("Folder doesn't exist");
+            }
+
+            var filePath = Path.Combine(_itemImagesDirectoryPath, fileName);
+
+            File.Delete(filePath);
+        }
+        public void RemoveFiles(ICollection<string> fileNames)
+        {
+            if (Directory.Exists(_itemImagesDirectoryPath) is false)
+            {
+                throw new ApiException("Folder doesn't exist");
+            }
+
+            foreach (var fileName in fileNames)
+            {
+                var filePath = Path.Combine(_itemImagesDirectoryPath, fileName);
+
+                File.Delete(filePath);
+            }
         }
     }
 }

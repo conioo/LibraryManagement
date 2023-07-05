@@ -6,14 +6,12 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using Newtonsoft.Json;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using Sieve.Models;
 using System.Net.Http.Json;
-using System.Reflection;
-using System.Text;
 using WebAPI.ApiRoutes;
 using WebAPITests.Integration.SharedContextBuilders;
+
+//testy do update
 
 namespace WebAPITests.Integration
 {
@@ -62,9 +60,8 @@ namespace WebAPITests.Integration
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
         }
 
-        // dla zdjec i bez
         [Fact]
-        async Task AddItemAsync_ForValidModel_Returns201Created()
+        async Task AddItemAsync_ForValidModelWithImage_Returns201Created()
         {
             var itemRequest = DataGenerator.GetOne<ItemRequest>();
 
@@ -93,39 +90,87 @@ namespace WebAPITests.Integration
 
             newItem.Should().BeEquivalentTo(itemRequest, options => options.ExcludingMissingMembers());
             responseItem.Should().BeEquivalentTo(itemRequest, options => options.ExcludingMissingMembers());
+
+            responseItem.ImagePaths.Count().Should().Be(1);
+            responseItem.ImagePaths.First().Should().Be(@"C:\mock.png");
+        }
+
+        [Fact]
+        async Task AddItemAsync_ForValidModelWithoutImage_Returns201Created()
+        {
+            var itemRequest = DataGenerator.GetOne<ItemRequest>();
+            itemRequest.Images = null;
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContent(itemRequest);
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri(_client.BaseAddress + Items.AddItem),
+                Content = formDataContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            var responseItem = await response.Content.ReadFromJsonAsync<ItemResponse>();
+            var expectedLocationUri = new Uri($"{_sharedContext.ApplicationSettings.BaseAddress}/{_sharedContext.ApplicationSettings.RoutePrefix}/{Items.Prefix}/{Items.GetItemById}?id={responseItem.Id}");
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
+            response.Headers.Location.Should().Be(expectedLocationUri);
+            _sharedContext.DbContext.Set<Item>().Count().Should().Be(4);
+
+            var newItem = await _sharedContext.DbContext.Set<Item>().FindAsync(responseItem.Id);
+
+            newItem.CreatedBy.Should().Be("default");
+            newItem.LastModifiedBy.Should().Be("default");
+
+            newItem.Should().BeEquivalentTo(itemRequest, options => options.ExcludingMissingMembers());
+            responseItem.Should().BeEquivalentTo(itemRequest, options => options.ExcludingMissingMembers());
+
+            responseItem.ImagePaths.Count().Should().Be(0);
         }
 
         [Fact]
         async Task AddItemsAsync_ForValidModels_Returns200Ok()
         {
-            var itemsRequest = DataGenerator.GetRequest<ItemRequest>(3);
+            var itemsRequest = DataGenerator.Get<ItemRequest>(3);
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContentFromCollection((ICollection<ItemRequest>)itemsRequest, "dtos");
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(_client.BaseAddress + Items.AddItems),
-                Content = JsonContent.Create(itemsRequest)
+                Content = formDataContent
             };
+
+            var ale = formDataContent.ToString();
 
             var response = await _client.SendAsync(request);
 
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(6);
+
+            var newItem = _sharedContext.DbContext.Set<Item>().Where(item => item.Title == itemsRequest.First().Title).First();
+            newItem.ImagePaths.Count.Should().Be(1);
+            newItem.ImagePaths.First().Should().Be("C:\\mock.png");
         }
 
         [Fact]
         async Task AddItemsAsync_OneInvalidModel_Returns400BadRequest()
         {
-            var itemsRequest = DataGenerator.GetRequest<ItemRequest>(3);
+            var itemsRequest = DataGenerator.Get<ItemRequest>(3);
 
             itemsRequest.First().ISBN = "102";
             itemsRequest.First().Title = "";
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContentFromCollection((ICollection<ItemRequest>)itemsRequest, "dtos");
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
                 RequestUri = new Uri(_client.BaseAddress + Items.AddItems),
-                Content = JsonContent.Create(itemsRequest)
+                Content = formDataContent
             };
 
             var response = await _client.SendAsync(request);
@@ -449,18 +494,20 @@ namespace WebAPITests.Integration
         [Fact]
         async Task UpdateItemAsync_ForInvalidModel_Returns400BadRequest()
         {
-            var updateItem = new ItemRequest()
+            var updateItem = new UpdateItemRequest()
             {
                 FormOfPublication = Form.AudioBook,
                 ISBN = "12345678910111213",
                 Title = "",
             };
 
+            var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
+
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(_client.BaseAddress + Items.UpdateItem + $"?id={_items.First().Id}"),
-                Content = JsonContent.Create(updateItem)
+                Content = formContent
             };
 
             var response = await _client.SendAsync(request);
@@ -482,18 +529,20 @@ namespace WebAPITests.Integration
         [Fact]
         async Task UpdateItemAsync_ForInvalidId_Returns404NotFound()
         {
-            var updateItem = new ItemRequest()
+            var updateItem = new UpdateItemRequest()
             {
                 FormOfPublication = Form.AudioBook,
                 ISBN = "1111111111111",
                 Title = "updated title"
             };
 
+            var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
+
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(_client.BaseAddress + Items.UpdateItem + $"?id=null_null"),
-                Content = JsonContent.Create(updateItem)
+                Content = formContent
             };
 
             var response = await _client.SendAsync(request);
@@ -518,11 +567,13 @@ namespace WebAPITests.Integration
                 Title = "updated title"
             };
 
+            var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
+
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Put,
                 RequestUri = new Uri(_client.BaseAddress + Items.UpdateItem + $"?id={_items.First().Id}"),
-                Content = JsonContent.Create(updateItem)
+                Content = formContent
             };
 
             var response = await _client.SendAsync(request);
@@ -542,5 +593,9 @@ namespace WebAPITests.Integration
         {
             _sharedContext.ResetState();
         }
+        
+        //addfiles
+        //remove files
+
     }
 }

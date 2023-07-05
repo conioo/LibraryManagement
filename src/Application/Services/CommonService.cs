@@ -1,6 +1,5 @@
 ﻿using Application.Dtos.Response;
 using Application.Exceptions;
-using Application.Extensions;
 using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -58,9 +57,9 @@ namespace Application.Services
 
             return _mapper.Map<TResponse>(existedEntity);
         }
-        public virtual async Task<TResponse> AddAsync(TRequest dto)
+        public virtual Task<TResponse> AddAsync(TRequest dto)
         {
-            return await AddAsync(_mapper.Map<T>(dto));
+            return AddAsync(_mapper.Map<T>(dto));
         }
         public virtual async Task<TResponse> AddAsync(T entity)
         {
@@ -104,18 +103,22 @@ namespace Application.Services
 
             _logger.LogInformation($"{_userResolverService.GetUserName} removed the {typeof(T).Name} with id: {id}");
         }
-        public async Task AddRangeAsync(IEnumerable<TRequest> dtos)
+        public virtual  Task AddRangeAsync(ICollection<TRequest> dtos)
         {
-            var entities = _mapper.Map<IEnumerable<T>>(dtos);
+            var entities = _mapper.Map<ICollection<T>>(dtos);
 
+            return AddRangeAsync(entities);
+
+        }
+        public virtual async Task AddRangeAsync(ICollection<T> entities)
+        {
             await _unitOfWork.Set<T>().AddRangeAsync(entities);
 
             await _unitOfWork.SaveChangesAsync();
 
-            _logger.LogInformation($"{_userResolverService.GetUserName} added {dtos.Count()} the {typeof(T).Name}");
-
+            _logger.LogInformation($"{_userResolverService.GetUserName} added {entities.Count} the {typeof(T).Name}");
         }
-        public async Task RemoveRangeAsync(IEnumerable<string> keys)
+        public virtual async Task RemoveRangeAsync(IEnumerable<string> keys)
         {
             List<T> entities = new List<T>();
 
