@@ -93,7 +93,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddItemAsync([FromForm]ItemRequest dto)
+        public async Task<IActionResult> AddItemAsync([FromForm] ItemRequest dto)
         {
             var createdItem = await _service.AddAsync(dto);
 
@@ -107,7 +107,7 @@ namespace WebAPI.Controllers
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddItemsAsync([FromForm]ICollection<ItemRequest> dtos)
+        public async Task<IActionResult> AddItemsAsync([FromForm] ICollection<ItemRequest> dtos)
         {
             await _service.AddRangeAsync(dtos);
 
@@ -150,6 +150,33 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> RemoveItemsAsync([FromBody] IEnumerable<string> ids)
         {
             await _service.RemoveRangeAsync(ids);
+
+            return Ok();
+        }
+
+        [HttpPatch(Items.AddImages)]
+        [SwaggerOperation(Summary = "adds new images to item")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AddImagesAsync([FromQuery] string id, [FromForm] ICollection<IFormFile> images)
+        {
+            await _service.AddImagesAsync(id, images);
+
+            return Ok();
+        }
+
+        [HttpPatch(Items.RemoveImages)]
+        [SwaggerOperation(Summary = "remove images from item")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> RemoveImagesAsync([FromQuery] string id, [FromBody] ICollection<string> imagePaths)
+        {
+            await _service.RemoveImagesAsync(id, imagePaths);
 
             return Ok();
         }

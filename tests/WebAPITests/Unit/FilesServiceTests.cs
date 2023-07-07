@@ -66,7 +66,7 @@ namespace WebAPITests.Unit
         }
 
         [Fact]
-        public async Task SaveFilesAsync_ForValidFormFiles_SaveFileCorrectly()
+        public async Task SaveFilesAsync_ForValidFormFiles_SaveFilesCorrectly()
         {
             var fileForms = new List<IFormFile>()
             {
@@ -82,7 +82,7 @@ namespace WebAPITests.Unit
         }
 
         [Fact]
-        public async Task SaveFilesAsync_ForValidFormFilesButNoDirectory_SaveFileCorrectly()
+        public async Task SaveFilesAsync_ForValidFormFilesButNoDirectory_SaveFilesCorrectly()
         {
             Directory.Delete(_testFolderPath, true);
 
@@ -100,7 +100,7 @@ namespace WebAPITests.Unit
         }
 
         [Fact]
-        public async Task SaveFilesAsync_ForValidFormFilesButOneFileBeNull_SaveFileCorrectly()
+        public async Task SaveFilesAsync_ForValidFormFilesButOneFileBeNull_SaveFilesCorrectly()
         {
             var fileForms = new List<IFormFile>()
             {
@@ -116,9 +116,101 @@ namespace WebAPITests.Unit
             File.Exists(Path.Combine(_testFolderPath, filenames[1])).Should().BeTrue();
         }
 
-        public void Dispose()
+        [Fact]
+        public async Task RemoveFile_ForExistingFile_RemoveFileCorrectly()
+        {
+            var fileForm = DataGenerator.GetImageFormFile("bookImage1.png");
+
+            var filename = await _filesService.SaveFileAsync(fileForm);
+
+            _filesService.RemoveFile(filename);
+
+            File.Exists(Path.Combine(_testFolderPath, filename)).Should().BeFalse();
+        }
+
+        [Fact]
+        public void RemoveFile_ForNonExistingFile_DoesNothing()
+        {
+            var filename = "3ja90image.png";
+
+            _filesService.RemoveFile(filename);
+
+            File.Exists(Path.Combine(_testFolderPath, filename)).Should().BeFalse();
+        }
+
+        [Fact]
+        public void RemoveFile_ForNonExistingDirectory_DoesNothing()
         {
             Directory.Delete(_testFolderPath, true);
+
+            var filename = "3ja90image.png";
+
+            _filesService.RemoveFile(filename);
+
+            Directory.Exists(_testFolderPath);
+
+            File.Exists(Path.Combine(_testFolderPath, filename)).Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RemoveFiles_ForExistingFiles_RemoveFilesCorrectly()
+        {
+            var fileForms = new List<IFormFile>()
+            {
+                DataGenerator.GetImageFormFile("bookImage1.png"),
+                DataGenerator.GetImageFormFile("bookImage2.png")
+            };
+
+            var filenames = (List<string>)await _filesService.SaveFilesAsync(fileForms);
+
+            _filesService.RemoveFiles(filenames);
+
+
+            File.Exists(Path.Combine(_testFolderPath, filenames[0])).Should().BeFalse();
+            File.Exists(Path.Combine(_testFolderPath, filenames[1])).Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RemoveFiles_ForOneNonExistingFile_RemoveOneFileCorrectly()
+        {
+            var fileForms = new List<IFormFile>()
+            {
+                DataGenerator.GetImageFormFile("bookImage1.png"),
+                DataGenerator.GetImageFormFile("bookImage2.png")
+            };
+
+            var filename = await _filesService.SaveFileAsync(fileForms[0]);
+
+            _filesService.RemoveFiles(new List<string>() { filename, "bookImage2.png" });
+
+
+            File.Exists(Path.Combine(_testFolderPath, filename)).Should().BeFalse();
+            File.Exists(Path.Combine(_testFolderPath, "bookImage2.png")).Should().BeFalse();
+        }
+
+        [Fact]
+        public void RemoveFiles_ForNonExistingDirectory_DoesNothing()
+        {
+            Directory.Delete(_testFolderPath, true);
+
+            var filenames = new List<string>()
+            {
+                "3ja90image.png",
+                "n49zkimage.png"
+            };
+
+            _filesService.RemoveFiles(filenames);
+
+            File.Exists(Path.Combine(_testFolderPath, filenames[0])).Should().BeFalse();
+            File.Exists(Path.Combine(_testFolderPath, filenames[1])).Should().BeFalse();
+        }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(_testFolderPath))
+            {
+                Directory.Delete(_testFolderPath, true);
+            }
         }
     }
 }

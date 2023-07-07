@@ -1,5 +1,4 @@
-﻿using Application.Exceptions;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Domain.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -30,7 +29,6 @@ namespace Application.Services
                                 , Guid.NewGuid().ToString().AsSpan(0, 5)
                                 , Path.GetExtension(fileName));
         }
-
         public async Task<string> SaveFileAsync(IFormFile file)
         {
             var uniqueFileName = GetUniqueFileName(file.FileName);
@@ -47,9 +45,10 @@ namespace Application.Services
                 await file.CopyToAsync(fileStream);
             }
 
+            _logger.LogInformation("Saved {0} file", uniqueFileName);
+
             return uniqueFileName;
         }
-
         public async Task<ICollection<string>> SaveFilesAsync(ICollection<IFormFile> files)
         {
             if (Directory.Exists(_itemImagesDirectoryPath) is false)
@@ -78,24 +77,28 @@ namespace Application.Services
                 fileNames.Add(uniqueFileName);
             }
 
+            _logger.LogInformation("Saved {0} files", String.Join(' ', fileNames));
+
             return fileNames;
         }
         public void RemoveFile(string fileName)
         {
             if (Directory.Exists(_itemImagesDirectoryPath) is false)
             {
-                throw new ApiException("Folder doesn't exist");
+                return;
             }
 
             var filePath = Path.Combine(_itemImagesDirectoryPath, fileName);
 
             File.Delete(filePath);
+
+            _logger.LogInformation("Deleted {0} file", fileName);
         }
         public void RemoveFiles(ICollection<string> fileNames)
         {
             if (Directory.Exists(_itemImagesDirectoryPath) is false)
             {
-                throw new ApiException("Folder doesn't exist");
+                return;
             }
 
             foreach (var fileName in fileNames)
@@ -104,6 +107,8 @@ namespace Application.Services
 
                 File.Delete(filePath);
             }
+
+            _logger.LogInformation("Deleted {0} files", String.Join(' ', fileNames));
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace Application.Interfaces
 {
@@ -9,8 +8,8 @@ namespace Application.Interfaces
     {
         public Task<IEnumerable<CopyResponse>> GetAllCopiesAsync(string id);
         public Task<IEnumerable<CopyResponse>> GetAvailableCopiesAsync(string id);
-        public Task AddImagesAsync(ICollection<IFormFile> images);
-        public Task RemoveImagesAsync(ICollection<string> imagePaths);
+        public Task AddImagesAsync(string id, ICollection<IFormFile> images);
+        public Task RemoveImagesAsync(string id, ICollection<string> imagePaths);
         public Task UpdateAsync(string id, UpdateItemRequest dto);
     }
 }

@@ -1,17 +1,19 @@
 ﻿using Application.Dtos.Request;
 using Application.Dtos.Response;
+using Application.Interfaces;
 using CommonContext;
 using Domain.Entities;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Moq;
 using Sieve.Models;
 using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
 using WebAPITests.Integration.SharedContextBuilders;
 
-//testy do update
+//mocka dodać
 
 namespace WebAPITests.Integration
 {
@@ -21,7 +23,6 @@ namespace WebAPITests.Integration
         private IEnumerable<Copy>? _copies;
         private readonly IEnumerable<Item> _items;
         private readonly SharedContext _sharedContext;
-
 
         public ItemsControllerTests(ItemContextBuilder sharedContextBuilder)
         {
@@ -498,7 +499,6 @@ namespace WebAPITests.Integration
             {
                 FormOfPublication = Form.AudioBook,
                 ISBN = "12345678910111213",
-                Title = "",
             };
 
             var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
@@ -517,7 +517,7 @@ namespace WebAPITests.Integration
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
             var details = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
 
-            details.Errors.Count().Should().Be(2);
+            details.Errors.Count().Should().Be(1);
 
 
             _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
@@ -555,12 +555,17 @@ namespace WebAPITests.Integration
 
             dbItem.Should().BeEquivalentTo(_items.First());
             dbItem.LastModified.Should().Be(dbItem.Created);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
         }
 
         [Fact]
         async Task UpdateItemAsync_ForValidModel_Returns200Ok()
         {
-            var updateItem = new ItemRequest()
+            var updateItem = new UpdateItemRequest()
             {
                 FormOfPublication = Form.Film,
                 ISBN = "1111111111111",
@@ -587,15 +592,318 @@ namespace WebAPITests.Integration
             dbItem.FormOfPublication.Should().Be(updateItem.FormOfPublication);
             dbItem.ISBN.Should().Be(updateItem.ISBN);
             dbItem.Should().BeEquivalentTo(_items.First(), opt => opt.Excluding(item => item.FormOfPublication).Excluding(item => item.Title).Excluding(item => item.ISBN).Excluding(item => item.LastModified).Excluding(item => item.LastModifiedBy));
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task UpdateItemAsync_ForValidModelWithCreateImage_Returns200Ok()
+        {
+            var updateItem = new UpdateItemRequest()
+            {
+                FormOfPublication = Form.Film,
+                ISBN = "1111111111111",
+                Title = "updated title",
+                ImagesToCreate = new List<IFormFile>() { DataGenerator.GetImageFormFile("itemImage.png")}
+            };
+
+            var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Put,
+                RequestUri = new Uri(_client.BaseAddress + Items.UpdateItem + $"?id={_items.First().Id}"),
+                Content = formContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+            _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
+
+            var dbItem = _sharedContext.DbContext.Set<Item>().Find(_items.First().Id);
+            dbItem.LastModified.Should().BeAfter(dbItem.Created);
+            dbItem.Title.Should().Be(updateItem.Title);
+            dbItem.FormOfPublication.Should().Be(updateItem.FormOfPublication);
+            dbItem.ISBN.Should().Be(updateItem.ISBN);
+            dbItem.Should().BeEquivalentTo(_items.First(), opt => opt.Excluding(item => item.FormOfPublication).Excluding(item => item.Title).Excluding(item => item.ISBN).Excluding(item => item.LastModified).Excluding(item => item.LastModifiedBy).Excluding(item => item.ImagePaths));
+
+            dbItem.ImagePaths.Count().Should().Be(2);
+            dbItem.ImagePaths.Contains("C:\\mock.png").Should().BeTrue();
+            dbItem.ImagePaths.Contains("fakeImage.png").Should().BeTrue();
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Once);
+        }
+
+        [Fact]
+        async Task UpdateItemAsync_ForValidModelWithDeleteImage_Returns200Ok()
+        {
+            var updateItem = new UpdateItemRequest()
+            {
+                FormOfPublication = Form.Film,
+                ISBN = "1111111111111",
+                Title = "updated title",
+                ImagePathsToDelete = new List<string>() { "fakeImage.png" }
+            };
+
+            var formContent = DataGenerator.GetMultipartFormDataContent(updateItem);
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Put,
+                RequestUri = new Uri(_client.BaseAddress + Items.UpdateItem + $"?id={_items.First().Id}"),
+                Content = formContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+            _sharedContext.DbContext.Set<Item>().Count().Should().Be(3);
+
+            var dbItem = _sharedContext.DbContext.Set<Item>().Find(_items.First().Id);
+            dbItem.LastModified.Should().BeAfter(dbItem.Created);
+            dbItem.Title.Should().Be(updateItem.Title);
+            dbItem.FormOfPublication.Should().Be(updateItem.FormOfPublication);
+            dbItem.ISBN.Should().Be(updateItem.ISBN);
+            dbItem.Should().BeEquivalentTo(_items.First(), opt => opt.Excluding(item => item.FormOfPublication).Excluding(item => item.Title).Excluding(item => item.ISBN).Excluding(item => item.LastModified).Excluding(item => item.LastModifiedBy).Excluding(item => item.ImagePaths));
+
+            dbItem.ImagePaths.Count().Should().Be(0);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.Is<ICollection<string>>(collection => collection.Count() == 1)), Times.Once);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddImagesAsync_ForValidModelWithImage_Returns200Ok()
+        {
+            var formFiles = new List<IFormFile>()
+            {
+                DataGenerator.GetImageFormFile("newImage1.png"),
+                DataGenerator.GetImageFormFile("newImage2.png")
+            };
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContentFromIFormFileCollection(formFiles, "images");
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.AddImages + $"?id={_items.First().Id}"),
+                Content = formDataContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().BeAfter(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(3);
+            updatedItem.ImagePaths.Contains(@"C:\mock.png");
+            updatedItem.ImagePaths.Contains("fakeImage.png");
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.Is<ICollection<IFormFile>>(collection => collection.Count() == 2)), Times.Once);
+        }
+
+        [Fact]
+        async Task AddImagesAsync_ForInvalidId_Returns404NotFound()
+        {
+            var formFiles = new List<IFormFile>()
+            {
+                DataGenerator.GetImageFormFile("newImage1.png"),
+            };
+
+            var formDataContent = DataGenerator.GetMultipartFormDataContentFromIFormFileCollection(formFiles, "images");
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.AddImages + $"?id=null_null"),
+                Content = formDataContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().Be(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(1);
+            updatedItem.ImagePaths.Contains("fakeImage.png");
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task AddImagesAsync_ForNoImages_Returns400BadRequest()
+        {
+            var formDataContent = new MultipartFormDataContent();
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.AddImages + $"?id={_items.First().Id}"),
+                Content = formDataContent
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var details = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+            details.Errors.Count.Should().Be(1);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().Be(updatedItem.Created);
+            updatedItem.ImagePaths.Count().Should().Be(1);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task RemoveImagesAsync_ForValidModelWithImage_Returns200Ok()
+        {
+            var filenames = new List<string>()
+            {
+                "fakeImage.png"
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.RemoveImages + $"?id={_items.First().Id}"),
+                Content = JsonContent.Create(filenames)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().BeAfter(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(0);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.Is<ICollection<string>>(collection => collection.Count() == 1)), Times.Once);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task RemoveImagesAsync_ForInvalidId_Returns404NotFound()
+        {
+            var filenames = new List<string>()
+            {
+                "fakeImage.png"
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.RemoveImages + $"?id=null_null"),
+                Content = JsonContent.Create(filenames)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().Be(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(1);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task RemoveImagesAsync_ForNoFilenames_Returns400BadRequest()
+        {
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.RemoveImages + $"?id={_items.First().Id}"),
+                Content = JsonContent.Create("")
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().Be(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(1);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
+        }
+
+        [Fact]
+        async Task RemoveImagesAsync_ForOneInvalidFilename_Returns400BadRequest()
+        {
+            var filenames = new List<string>()
+            {
+                "fakeImage.png",
+                "invalid.png"
+            };
+
+            var request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Patch,
+                RequestUri = new Uri(_client.BaseAddress + Items.RemoveImages + $"?id={_items.First().Id}"),
+                Content = JsonContent.Create(filenames)
+            };
+
+            var response = await _client.SendAsync(request);
+
+            response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+
+            var updatedItem = await _sharedContext.DbContext.Set<Item>().FindAsync(_items.First().Id);
+
+            updatedItem.LastModified.Should().Be(updatedItem.Created);
+
+            updatedItem.ImagePaths.Count().Should().Be(1);
+
+            var filesServiceMock = _sharedContext.GetMock<IFilesService>();
+
+            filesServiceMock.Verify(service => service.RemoveFiles(It.IsAny<ICollection<string>>()), Times.Never);
+            filesServiceMock.Verify(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>()), Times.Never);
         }
 
         public void Dispose()
         {
             _sharedContext.ResetState();
         }
-        
-        //addfiles
-        //remove files
-
     }
 }

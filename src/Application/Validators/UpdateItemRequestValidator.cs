@@ -8,7 +8,7 @@ namespace Application.Validators
         public UpdateItemRequestValidator()
         {
             RuleFor(model => model.Title)
-                .MinimumLength(1);//czy null przechodzi
+                .MinimumLength(1);
 
             RuleFor(model => model.FormOfPublication)
                 .IsInEnum();

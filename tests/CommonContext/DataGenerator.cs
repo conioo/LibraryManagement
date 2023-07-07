@@ -6,6 +6,7 @@ using Domain.Entities;
 using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Reflection;
@@ -318,7 +319,15 @@ namespace CommonContext
                     foreach (var file in fileCollection)
                     {
                         var fileContent = new ByteArrayContent(ReadFileBytes(file));
-                        formData.Add(fileContent, propertyInfo.Name, file.FileName);//sprawdzic
+                        formData.Add(fileContent, propertyInfo.Name, file.FileName);
+                    }
+                }
+                else if(value is ICollection<string> stringCollection)
+                {
+                    foreach(var stringValue in stringCollection)
+                    {
+                        var stringContent = new StringContent(stringValue);
+                        formData.Add(stringContent, propertyInfo.Name);
                     }
                 }
                 else
@@ -326,6 +335,19 @@ namespace CommonContext
                     var stringContent = new StringContent(value.ToString());
                     formData.Add(stringContent, propertyInfo.Name);
                 }
+            }
+
+            return formData;
+        }
+        public static MultipartFormDataContent GetMultipartFormDataContentFromIFormFileCollection(ICollection<IFormFile> formFiles, string collectionName)
+        {
+            MultipartFormDataContent formData = new MultipartFormDataContent();
+
+            foreach (var file in formFiles)
+            {
+                var fileContent = new ByteArrayContent(ReadFileBytes(file));
+
+                formData.Add(fileContent, collectionName, file.FileName);
             }
 
             return formData;

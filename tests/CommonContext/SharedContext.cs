@@ -282,7 +282,17 @@ namespace WebAPITests.Integration
 
                     var filesServiceMock = new Mock<IFilesService>();
 
-                    filesServiceMock.Setup(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>())).Returns((ICollection<IFormFile> list) => Task.FromResult((ICollection<string>)new List<string>() { "C:\\mock.png" }));
+                    filesServiceMock.Setup(service => service.SaveFilesAsync(It.IsAny<ICollection<IFormFile>>())).Returns((ICollection<IFormFile> list) =>
+                    {
+                        var fileNames = new List<string>();
+
+                        for (int i = 0; i < list.Count; ++i)
+                        {
+                            fileNames.Add("C:\\mock.png");
+                        }
+
+                        return Task.FromResult((ICollection<string>)fileNames);
+                    });
 
                     Mocks[typeof(IFilesService)] = filesServiceMock;
 
