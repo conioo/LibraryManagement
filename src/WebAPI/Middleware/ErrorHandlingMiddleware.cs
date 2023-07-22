@@ -48,7 +48,13 @@ namespace WebAPI.Middleware
 
                 await context.Response.WriteAsync(exception.Message);
             }
-            catch(BadRequestException exception)
+            catch (AuthorizationException exception)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+
+                await context.Response.WriteAsync(exception.Message);
+            }
+            catch (BadRequestException exception)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 

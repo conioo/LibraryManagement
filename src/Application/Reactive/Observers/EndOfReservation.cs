@@ -24,18 +24,26 @@ namespace Application.Reactive.Observers
             _logger = logger;
         }
 
-        public void AddReservation(Copy copy)
+        public void AddReservation(Reservation copy)
         {
-            var endOfReservationDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(_reservationOptions.TimeInDays);
+            //var endOfReservationDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(_reservationOptions.TimeInDays);
 
-            if (_copies.ContainsKey(endOfReservationDate))
-            {
-                _copies[endOfReservationDate].Add(copy);
-            }
-            else
-            {
-                _copies.Add(endOfReservationDate, new List<Copy>() { copy });
-            }
+            //if (_copies.ContainsKey(endOfReservationDate))
+            //{
+            //    _copies[endOfReservationDate].Add(copy);
+            //}
+            //else
+            //{
+            //    _copies.Add(endOfReservationDate, new List<Copy>() { copy });
+            //}
+
+
+            //// po 7 dniach usuwa i daje do historii, copy available
+        }
+
+        public void AddReservationToHistory(Reservation reservation)
+        {
+            throw new NotImplementedException();
         }
 
         public void OnCompleted()
@@ -91,6 +99,11 @@ namespace Application.Reactive.Observers
 
             _logger.LogInformation($"Failed {numberFailedReservation} reservations");
             _copies.Remove(date);
+        }
+
+        public void RemoveReservation(string id)
+        {
+            throw new NotImplementedException();
         }
     }
 }

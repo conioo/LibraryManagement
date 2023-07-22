@@ -62,7 +62,7 @@ namespace Infrastructure.Identity.Services
                 }
 
                 var value = _httpContextAccessor.HttpContext.User.Claims.FirstOrDefault(claim => claim.Type == "ProfileCardNumber")?.Value;
-
+                
                 if(value == string.Empty)
                 {
                     return null;

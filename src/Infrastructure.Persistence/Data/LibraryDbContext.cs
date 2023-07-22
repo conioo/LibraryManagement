@@ -97,10 +97,6 @@ namespace Infrastructure.Persistence.Data
             builder.Entity<Rental>(entityBuilder =>
             {
                 entityBuilder.Property(entity => entity.Id).ValueGeneratedOnAdd();
-
-                //entityBuilder.HasOne(rental => rental.Copy)
-                //.WithOne(copy => copy.CurrentRental)
-                //.HasForeignKey<Rental>(rental => rental.CopyInventoryNumber);
             });
 
             builder.Entity<Reservation>(entityBuilder =>

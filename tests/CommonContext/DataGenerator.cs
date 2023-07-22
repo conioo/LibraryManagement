@@ -35,7 +35,6 @@ namespace CommonContext
 
             _mapper = mapperConfiguration.CreateMapper();
 
-            //_domainTypes[typeof(ItemRequest)] = typeof(Item);
             _domainTypes[typeof(RoleRequest)] = typeof(IdentityRole);
             _domainTypes[typeof(LibraryRequest)] = typeof(Library);
 

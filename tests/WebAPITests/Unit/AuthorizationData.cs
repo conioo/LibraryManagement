@@ -99,6 +99,12 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
+
+                    new object[]{Reservations.Prefix, Reservations.AddReservation, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.AddReservations, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.GetReservationById, HttpMethod.Get },
+                    new object[]{Reservations.Prefix, Reservations.RemoveReservationById, HttpMethod.Delete },
+                    new object[]{Reservations.Prefix, Reservations.Rent, HttpMethod.Post },
                 };
 
 
@@ -138,6 +144,11 @@ namespace WebAPITests.Unit
                     new object[]{Profiles.Prefix, Profiles.CreateProfile, HttpMethod.Post },
                     new object[]{Profiles.Prefix, Profiles.GetProfile, HttpMethod.Get },
                     new object[]{Profiles.Prefix, Profiles.GetProfileWithHistory, HttpMethod.Get },
+
+                    new object[]{Reservations.Prefix, Reservations.AddReservation, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.AddReservations, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.GetReservationById, HttpMethod.Get },
+                    new object[]{Reservations.Prefix, Reservations.RemoveReservationById, HttpMethod.Delete },
 
                 };
             }
@@ -203,6 +214,8 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
+
+                    new object[]{Reservations.Prefix, Reservations.Rent, HttpMethod.Post },
                 };
             }
         }
@@ -268,6 +281,12 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
+
+                    new object[]{Reservations.Prefix, Reservations.AddReservation, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.AddReservations, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.GetReservationById, HttpMethod.Get },
+                    new object[]{Reservations.Prefix, Reservations.RemoveReservationById, HttpMethod.Delete },
+                    new object[]{Reservations.Prefix, Reservations.Rent, HttpMethod.Post },
                 };
             }
         }
@@ -384,6 +403,12 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
+
+                    new object[]{Reservations.Prefix, Reservations.AddReservation, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.AddReservations, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.GetReservationById, HttpMethod.Get },
+                    new object[]{Reservations.Prefix, Reservations.RemoveReservationById, HttpMethod.Delete },
+                    new object[]{Reservations.Prefix, Reservations.Rent, HttpMethod.Post },
                 };
             }
         }
@@ -486,6 +511,12 @@ namespace WebAPITests.Unit
                     new object[]{Rentals.Prefix, Rentals.Return, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.Returns, HttpMethod.Patch },
                     new object[]{Rentals.Prefix, Rentals.PayThePenalty, HttpMethod.Patch },
+
+                    new object[]{Reservations.Prefix, Reservations.AddReservation, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.AddReservations, HttpMethod.Post },
+                    new object[]{Reservations.Prefix, Reservations.GetReservationById, HttpMethod.Get },
+                    new object[]{Reservations.Prefix, Reservations.RemoveReservationById, HttpMethod.Delete },
+                    new object[]{Reservations.Prefix, Reservations.Rent, HttpMethod.Post },
                 };
             }
         }

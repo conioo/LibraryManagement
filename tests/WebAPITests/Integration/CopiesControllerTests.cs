@@ -2,7 +2,6 @@
 using Application.Dtos.Response;
 using Application.Dtos.Response.Archive;
 using CommonContext;
-using CommonContext.Extensions;
 using Domain.Entities;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +44,7 @@ namespace WebAPITests.Integration
             rental.Copy = _copies.First();
             rental.Profile = profile;
 
-            var reservation = DataGenerator.GetOne<Reservation>();
+            var reservation = DataGenerator.GetOne<Domain.Entities.Reservation>();
             reservation.Copy = _copies.First();
             reservation.Profile = profile;
 
