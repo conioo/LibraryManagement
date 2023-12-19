@@ -10,6 +10,7 @@ using Infrastructure.Identity.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Moq;
 using System.Net.Http.Json;
 using WebAPI.ApiRoutes;
@@ -873,7 +874,7 @@ namespace WebAPITests.Integration
             var countingOfPenaltyChargeMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
             countingOfPenaltyChargeMock.Verify(service => service.AddRental(It.Is<Rental>(rental => rental.Copy.InventoryNumber == _reservations.First().Copy.InventoryNumber && rental.Profile.LibraryCardNumber == _defaultProfile.LibraryCardNumber)), Times.Once);
-            endOfReservationMock.Verify(service => service.AddReservationToHistory(It.Is<Reservation>(reservation => reservation.Id == _reservations.First().Id)), Times.Once);
+            endOfReservationMock.Verify(service => service.RemoveReservation(It.Is<Reservation>(reservation => reservation.Id == _reservations.First().Id)), Times.Once);
         }
 
         [Fact]
@@ -907,7 +908,7 @@ namespace WebAPITests.Integration
             var countingOfPenaltyChargeMock = _sharedContext.GetMock<ICountingOfPenaltyCharges>();
 
             countingOfPenaltyChargeMock.Verify(service => service.AddRental(It.IsAny<Rental>()), Times.Never);
-            endOfReservationMock.Verify(service => service.AddReservationToHistory(It.IsAny<Reservation>()), Times.Never);
+            endOfReservationMock.Verify(service => service.RemoveReservation(It.IsAny<Reservation>()), Times.Never);
         }
 
         public void Dispose()

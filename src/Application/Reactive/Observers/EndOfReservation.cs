@@ -1,4 +1,6 @@
-﻿using Application.Reactive.Interfaces;
+﻿using Application.Dtos;
+using Application.Interfaces;
+using Application.Reactive.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Settings;
@@ -14,36 +16,113 @@ namespace Application.Reactive.Observers
         private readonly IServiceProvider _serviceProvider;
         private readonly ReservationSettings _reservationOptions;
         private readonly ILogger<EndOfReservation> _logger;
+        private readonly IEmailService _emailService;
+        private IDictionary<DateOnly, List<string>> _reservationsId = new Dictionary<DateOnly, List<string>>();
 
-        private IDictionary<DateOnly, List<Copy>> _copies = new Dictionary<DateOnly, List<Copy>>();//end reservation
-
-        public EndOfReservation(IServiceProvider serviceProvider,/* IOptions<ReservationSettings> options,*/ ILogger<EndOfReservation> logger, IOptions<RentalSettings> ren)
+        public EndOfReservation(IServiceProvider serviceProvider, IOptions<ReservationSettings> options, IEmailService emailService, ILogger<EndOfReservation> logger)
         {
             _serviceProvider = serviceProvider;
-            //_reservationOptions = options.Value;
+            _reservationOptions = options.Value;
             _logger = logger;
+            _emailService = emailService;
+        }
+        //wymusic wczesniejesze
+        //testy dla reactive endofreserwation jak counting 
+        //remove dokonczyc
+
+        //pobrac -> do historii
+        private ArchivalReservation? GerArchivalReservation(IUnitOfWork unitOfWork, string reservationId, out string? userId)
+        {
+            var reservationInfo = unitOfWork.Set<Reservation>()
+                       .Where(reservation => reservation.Id == reservationId).Select(reservation => new
+                       {
+                           reservation,
+                           reservation.Profile.UserId,
+                           reservation.Profile.ProfileHistoryId,
+                           reservation.Copy.CopyHistoryId,
+                           CopyInventoryNumber = reservation.Copy.InventoryNumber
+                       }).FirstOrDefault();
+
+            if (reservationInfo is null)
+            {
+                _logger.LogInformation($"Reservation with id: {reservationId} not found");
+                userId = null;
+                return null;
+            }
+
+            var referenceToCopy = new Copy() { InventoryNumber = reservationInfo.CopyInventoryNumber, IsAvailable = true };
+
+            unitOfWork.Set<Copy>().Attach(referenceToCopy);
+            unitOfWork.Set<Copy>().Entry(referenceToCopy).Property(copy => copy.IsAvailable).IsModified = true;
+
+            var referenceToProfileHistory = new ProfileHistory() { Id = reservationInfo.ProfileHistoryId };
+            var referenceToCopyHistory = new CopyHistory() { Id = reservationInfo.CopyHistoryId };
+
+            unitOfWork.Set<ProfileHistory>().Attach(referenceToProfileHistory);
+            unitOfWork.Set<CopyHistory>().Attach(referenceToCopyHistory);
+
+            userId = reservationInfo.UserId;
+
+            return (new ArchivalReservation()
+            {
+                BeginDate = reservationInfo.reservation.BeginDate,
+                EndDate = reservationInfo.reservation.EndDate,
+                ProfileHistory = referenceToProfileHistory,
+                CopyHistory = referenceToCopyHistory
+            });
+        }
+        protected virtual TService GetService<TService>(IServiceProvider provider) where TService : class
+        {
+            return provider.GetRequiredService<TService>();
+        }
+        protected virtual IServiceScope CreateScope(IServiceProvider serviceProvider)
+        {
+            return serviceProvider.CreateScope();
         }
 
-        public void AddReservation(Reservation copy)
+        public void AddReservation(string reservationId)
         {
-            //var endOfReservationDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(_reservationOptions.TimeInDays);
+            var endOfReservationDate = DateOnly.FromDateTime(DateTime.Now).AddDays(_reservationOptions.TimeInDays);
 
-            //if (_copies.ContainsKey(endOfReservationDate))
-            //{
-            //    _copies[endOfReservationDate].Add(copy);
-            //}
-            //else
-            //{
-            //    _copies.Add(endOfReservationDate, new List<Copy>() { copy });
-            //}
+            if (_reservationsId.ContainsKey(endOfReservationDate))
+            {
+                _reservationsId[endOfReservationDate].Add(reservationId);
+            }
+            else
+            {
+                _reservationsId.Add(endOfReservationDate, new List<string>() { reservationId });
+            }
 
+        }
+        public void AddReservation(Reservation reservation)
+        {
+            AddReservation(reservation.Id);
+        }
+        public void RemoveReservation(string id)
+        {
+            //remeove i dohistori
+            //_reservationsId
 
-            //// po 7 dniach usuwa i daje do historii, copy available
         }
 
-        public void AddReservationToHistory(Reservation reservation)
+        public void RemoveReservation(Reservation reservation)
         {
-            throw new NotImplementedException();
+            var endDate = reservation.EndDate;
+
+            if (_reservationsId.ContainsKey(endDate) is false)
+            {
+                return;
+            }
+
+            _reservationsId[endDate].Remove(reservation.Id);
+
+            // do historii dodac
+
+            using (var scope = CreateScope(_serviceProvider))
+            {
+                var unitOfWork = GetService<IUnitOfWork>(scope.ServiceProvider);
+
+            }
         }
 
         public void OnCompleted()
@@ -58,52 +137,46 @@ namespace Application.Reactive.Observers
 
         public void OnNext(DateTimeOffset value)
         {
-            var date = DateOnly.FromDateTime(DateTime.Now).AddDays(-1);
+            var date = DateOnly.FromDateTime(value.DateTime);
 
-            if (!_copies.ContainsKey(date))
+            if (_reservationsId.ContainsKey(date) is false)
             {
                 return;
             }
 
-            var copies = _copies[date];
-
-            int numberFailedReservation = 0;
-
-            using (var scope = _serviceProvider.CreateScope())
+            using (var scope = CreateScope(_serviceProvider))
             {
-                var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+                var unitOfWork = GetService<IUnitOfWork>(scope.ServiceProvider);
 
-                foreach (var copy in copies)
+                var reservationIds = _reservationsId[date];
+                int numberEnded = 0;
+                var archivalReservations = new List<ArchivalReservation>();
+                var userService = GetService<IUserService>(scope.ServiceProvider);
+
+                foreach (var id in reservationIds)
                 {
-                    Copy copyModel = unitOfWork.Set<Copy>().AsNoTracking().Include(model => model.CurrentReservation).Single(model => model.InventoryNumber == copy.InventoryNumber);
+                    var archivalReservation = GerArchivalReservation(unitOfWork, id, out string? userId);
 
-                    var reservation = copyModel.CurrentReservation;
-
-                    if (reservation is null)
+                    if (userId is not null)
                     {
-                        _logger.LogInformation($"The last reservation for copy: {copy.InventoryNumber} is missing");
-                        break;
+                        _emailService.SendAsync(new Email(userService.GetEmail(userId).Result, "The reservation period has expired", "Reservation period has ended"));
                     }
 
-                    //if (reservation.Received is false)
+                    if (archivalReservation is not null)
+                    {
+                        archivalReservations.Add(archivalReservation);
+                    }
 
-                    ++numberFailedReservation;
-
-                    copy.IsAvailable = true;
-
+                    ++numberEnded;
                 }
 
-                unitOfWork.Set<Copy>().UpdateRange(copies);
-                unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("{1} reservations has expired", numberEnded);
+
+                unitOfWork.Set<ArchivalReservation>().AddRange(archivalReservations);
+                unitOfWork.SaveChanges();
+
+                _reservationsId.Remove(date);
             }
-
-            _logger.LogInformation($"Failed {numberFailedReservation} reservations");
-            _copies.Remove(date);
-        }
-
-        public void RemoveReservation(string id)
-        {
-            throw new NotImplementedException();
         }
     }
 }

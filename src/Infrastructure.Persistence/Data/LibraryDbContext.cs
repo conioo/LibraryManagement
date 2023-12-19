@@ -1,5 +1,4 @@
 ﻿#pragma warning disable CS8618
-using Application.Dtos.Request;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -25,7 +24,7 @@ namespace Infrastructure.Persistence.Data
         public DbSet<ProfileHistory> ProfilesHistories { get; set; }
         public DbSet<ArchivalRental> ArchivalRentals { get; set; }
         public DbSet<ArchivalReservation> ArchivalReservations { get; set; }
-        
+
         public LibraryDbContext()
         {
 
@@ -39,9 +38,9 @@ namespace Infrastructure.Persistence.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-               optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"), options => options.UseDateOnlyTimeOnly());
+                optionsBuilder.UseSqlServer(_configuration.GetConnectionString("LibraryCS"), options => options.UseDateOnlyTimeOnly());
                 //if development
-               //optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
+                //optionsBuilder.UseSqlServer("Server=(LocalDb)\\MSSQLLocalDB;Database=LibraryDB;Trusted_Connection=True;");
             }
         }
         protected override void OnModelCreating(ModelBuilder builder)

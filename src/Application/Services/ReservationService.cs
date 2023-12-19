@@ -234,9 +234,15 @@ namespace Application.Services
         }
         public async Task<RentalResponse> RentAsync(string id)
         {
-            var reservationInfo = await _unitOfWork.Set<Reservation>().Where(reservation => reservation.Id == id).Select(reservation => new { ReferenceToProfile = new Profile() { LibraryCardNumber = reservation.Profile.LibraryCardNumber }, ReferenceToCopy = new Copy() { InventoryNumber = reservation.Copy.InventoryNumber }, reservation }).FirstOrDefaultAsync();
+            var reservation = await _unitOfWork.Set<Reservation>().Where(reservation => reservation.Id == id).Select(reservation => new Reservation() {
+                Profile = new Profile() { LibraryCardNumber = reservation.Profile.LibraryCardNumber },
+                Copy = new Copy() { InventoryNumber = reservation.Copy.InventoryNumber },
+                EndDate = reservation.EndDate,
+                BeginDate = reservation.BeginDate,
+                Id = reservation.Id
+            }).FirstOrDefaultAsync();
 
-            if (reservationInfo is null)
+            if (reservation is null)
             {
                 throw new NotFoundException();
             }
@@ -247,20 +253,20 @@ namespace Application.Services
             {
                 BeginDate = now,
                 EndDate = now.AddDays(_rentalSettings.TimeInDays),
-                Profile = reservationInfo.ReferenceToProfile,
-                Copy = reservationInfo.ReferenceToCopy
+                Profile = reservation.Profile,
+                Copy = reservation.Copy
             };
 
-            _unitOfWork.Set<Profile>().Attach(reservationInfo.ReferenceToProfile);
-            _unitOfWork.Set<Copy>().Attach(reservationInfo.ReferenceToCopy);
+            _unitOfWork.Set<Profile>().Attach(reservation.Profile);
+            _unitOfWork.Set<Copy>().Attach(reservation.Copy);
 
-            _unitOfWork.Set<Reservation>().Remove(reservationInfo.reservation);
+            _unitOfWork.Set<Reservation>().Remove(reservation);
             _unitOfWork.Set<Rental>().Add(newRental);
 
             await _unitOfWork.SaveChangesAsync();
 
             _countingOfPenaltyCharge.AddRental(newRental);
-            _endOfReservation.AddReservationToHistory(reservationInfo.reservation);
+            _endOfReservation.RemoveReservation(reservation);
 
             return _mapper.Map<RentalResponse>(newRental);
         }
